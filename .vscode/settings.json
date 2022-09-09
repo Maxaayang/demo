@@ -1,0 +1,10 @@
+{
+    "python.pythonPath": "/home/addr/miniconda3/envs/tension/bin/python",
+    "workbench.colorCustomizations": {
+        "editor.lineHighlightBackground": "#1073cf2d",
+        "editor.lineHighlightBorder": "#9fced11f",
+        "activityBar.background": "#0A3525",
+        "titleBar.activeBackground": "#0D4A33",
+        "titleBar.activeForeground": "#F2FCF8"
+    }
+}
