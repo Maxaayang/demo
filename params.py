@@ -39,7 +39,7 @@ num_examples_to_generate = 10
 # BASE_PATH = 'lmd_matched\\A\\A\\A\\TRAAAZF12903CCCF6B\\*.mid'
 # BASE_PATH="./data/r_data/*.mid"
 # BASE_PATH="./data/m_data/data/mid/*.mid"
-BASE_PATH="./lmd/*.mid"
+BASE_PATH="../data/lmd/*.mid"
 DATA_PATH = 'jazz'
 SAVE_MODEL_NAME =  "model.pth"
 
@@ -48,7 +48,7 @@ DEBUG = True
 # note feature: pitch, step, duration
 batch_size = 64
 sequence_lenth = 1
-max_file_num = 1200
+max_file_num = 12
 epochs = 200
 learning_rate = 0.005
 

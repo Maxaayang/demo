@@ -1,0 +1,1254 @@
+Using cuda device
+Find 9526 files.
+Reading 12 files...
+f  ../data/lmd/107e4bc3d4ba312c14fcd0b82d7eb663.mid
+not enough data for melody and bass track
+f  ../data/lmd/df0be94e2d44c99262c6bb9c93442231.mid
+piano_roll shape:  (15, 64, 89)
+f  ../data/lmd/737342739894369c4b0b1d9208bdcd14.mid
+piano_roll shape:  (19, 64, 89)
+f  ../data/lmd/b8a8c13dc41d320f6dd9bc3b53bd1a0b.mid
+not enough data for melody and bass track
+f  ../data/lmd/77b404016fcd965d94e43eb28bf37c8c.mid
+piano_roll shape:  (16, 64, 89)
+f  ../data/lmd/2cdf37f6465403fef4a658300b7e66da.mid
+piano_roll shape:  (21, 64, 89)
+f  ../data/lmd/a16b9842d972d194243ee68192215f4c.mid
+piano_roll shape:  (21, 64, 89)
+f  ../data/lmd/cdf46358a29572a7fdc2926633779973.mid
+piano_roll shape:  (10, 64, 89)
+f  ../data/lmd/dcedf8f9efe7d9795c516950cc4973b6.mid
+piano_roll shape:  (12, 64, 89)
+f  ../data/lmd/a019a395ea4976f82c2f54e792ce8656.mid
+piano_roll shape:  (12, 64, 89)
+f  ../data/lmd/cdfe6d8898b0f6b4ed6e74d2b7c21d9f.mid
+piano_roll shape:  (22, 64, 89)
+f  ../data/lmd/4fe0d02777b88f9c2d463af769e143a0.mid
+piano_roll shape:  (20, 64, 89)
+note length:  155
+Read 154 sequences.
+note length:  155
+loader length:  3
+loader  <torch.utils.data.dataloader.DataLoader object at 0x14e48b459610>
+note length:  155
+X: torch.Size([64, 1, 89]) torch.float32
+y: {'pitch': tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), 'step': tensor([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]), 'duration': tensor([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+        0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])}
+VQVAE(
+  (egru): GRU(89, 256)
+  (gru): GRU(256, 256)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (dgru): GRU(256, 256)
+  (vq_layer): VectorQuantizer(
+    (embedding): Embedding(20, 256)
+  )
+)
+Start trainning...
+note length:  155
+Epoch 1
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6779309908548992
+Epoch 2
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6764419078826904
+Epoch 3
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6749379634857178
+Epoch 4
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6734577814737956
+Epoch 5
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6719706853230794
+Epoch 6
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6705560684204102
+Epoch 7
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6690715948740642
+Epoch 8
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6675502459208171
+Epoch 9
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6659400065739949
+Epoch 10
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6643752257029216
+Epoch 11
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.66307799021403
+Epoch 12
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6615616083145142
+Epoch 13
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6601264874140422
+Epoch 14
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.658580978711446
+Epoch 15
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6570748488108318
+Epoch 16
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6555372873942058
+Epoch 17
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6541064182917278
+Epoch 18
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6526761849721272
+Epoch 19
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.651198943456014
+Epoch 20
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6496862173080444
+Epoch 21
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6482295195261638
+Epoch 22
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6468173662821453
+Epoch 23
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6452582279841106
+Epoch 24
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6437552372614543
+Epoch 25
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6422638893127441
+Epoch 26
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.640863259633382
+Epoch 27
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6394957304000854
+Epoch 28
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6379793882369995
+Epoch 29
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6364791790644329
+Epoch 30
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6350122690200806
+Epoch 31
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6334877808888753
+Epoch 32
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6320964495340984
+Epoch 33
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6305537621180217
+Epoch 34
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6291886170705159
+Epoch 35
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6277589797973633
+Epoch 36
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.626320719718933
+Epoch 37
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6248127222061157
+Epoch 38
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6232479413350422
+Epoch 39
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.621857722600301
+Epoch 40
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6204745769500732
+Epoch 41
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6190330982208252
+Epoch 42
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6175724267959595
+Epoch 43
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6160784165064495
+Epoch 44
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6145524581273396
+Epoch 45
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6132246255874634
+Epoch 46
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6117261250813801
+Epoch 47
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6102960507074993
+Epoch 48
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6089006265004475
+Epoch 49
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6073719263076782
+Epoch 50
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6059080759684246
+Epoch 51
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.604535420735677
+Epoch 52
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6030470927556355
+Epoch 53
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6017043987909954
+Epoch 54
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.6001617113749187
+Epoch 55
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5986911058425903
+Epoch 56
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5972905158996582
+Epoch 57
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5958325862884521
+Epoch 58
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5944210688273113
+Epoch 59
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5930263201395671
+Epoch 60
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5915807882944744
+Epoch 61
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5900249878565471
+Epoch 62
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5885981718699138
+Epoch 63
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5872164169947307
+Epoch 64
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5858325560887654
+Epoch 65
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.58433202902476
+Epoch 66
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.582919438680013
+Epoch 67
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5814710855484009
+Epoch 68
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5800442695617676
+Epoch 69
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5785683790842693
+Epoch 70
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5770923296610515
+Epoch 71
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5756832361221313
+Epoch 72
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5743197600046794
+Epoch 73
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5729368527730305
+Epoch 74
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5714420080184937
+Epoch 75
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.569932182629903
+Epoch 76
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5684749682744343
+Epoch 77
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.567118763923645
+Epoch 78
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.565665364265442
+Epoch 79
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5642375548680623
+Epoch 80
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.56275208791097
+Epoch 81
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5613185962041218
+Epoch 82
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5600312153498332
+Epoch 83
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5584869782129924
+Epoch 84
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.557024319966634
+Epoch 85
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.555599292119344
+Epoch 86
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5540921290715535
+Epoch 87
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5526729822158813
+Epoch 88
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5513330698013306
+Epoch 89
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5498984257380168
+Epoch 90
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5484874248504639
+Epoch 91
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.546984116236369
+Epoch 92
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5455536842346191
+Epoch 93
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5440426270167034
+Epoch 94
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5425183773040771
+Epoch 95
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5412033796310425
+Epoch 96
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.539839545885722
+Epoch 97
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5384585460027058
+Epoch 98
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5369655688603718
+Epoch 99
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.535382588704427
+Epoch 100
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5339913368225098
+Epoch 101
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5324941078821819
+Epoch 102
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5310240189234416
+Epoch 103
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5296892325083415
+Epoch 104
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5283640225728352
+Epoch 105
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5269331534703572
+Epoch 106
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5252582629521687
+Epoch 107
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.523847262064616
+Epoch 108
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5224452018737793
+Epoch 109
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.520987868309021
+Epoch 110
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5195274750391643
+Epoch 111
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.518147865931193
+Epoch 112
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5166994730631511
+Epoch 113
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5152347087860107
+Epoch 114
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5137530167897542
+Epoch 115
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.512308955192566
+Epoch 116
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5108836889266968
+Epoch 117
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5094470183054607
+Epoch 118
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5079131921132405
+Epoch 119
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5064842303593953
+Epoch 120
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.505027214686076
+Epoch 121
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5036274194717407
+Epoch 122
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5021485090255737
+Epoch 123
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.5007662773132324
+Epoch 124
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4991810321807861
+Epoch 125
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.497708519299825
+Epoch 126
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.496235966682434
+Epoch 127
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4948190053304036
+Epoch 128
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4934229850769043
+Epoch 129
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.491976300875346
+Epoch 130
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4904487133026123
+Epoch 131
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4889241059621174
+Epoch 132
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4874742428461711
+Epoch 133
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4859871864318848
+Epoch 134
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4845563968022664
+Epoch 135
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4831690390904744
+Epoch 136
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4816528956095378
+Epoch 137
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4800581137339275
+Epoch 138
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4786521593729656
+Epoch 139
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4771904548009236
+Epoch 140
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4757620493570964
+Epoch 141
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4742082357406616
+Epoch 142
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.472706953684489
+Epoch 143
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4712809324264526
+Epoch 144
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4697562058766682
+Epoch 145
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4682666460673015
+Epoch 146
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4668269554773967
+Epoch 147
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4653186400731404
+Epoch 148
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4638537168502808
+Epoch 149
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4623268842697144
+Epoch 150
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4608232975006104
+Epoch 151
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.459333896636963
+Epoch 152
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.457869291305542
+Epoch 153
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4563268423080444
+Epoch 154
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4548850059509277
+Epoch 155
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4534175793329875
+Epoch 156
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4518275260925293
+Epoch 157
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4503507614135742
+Epoch 158
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4488378763198853
+Epoch 159
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4473257859547932
+Epoch 160
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4457109769185383
+Epoch 161
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4443487723668416
+Epoch 162
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4428618748982747
+Epoch 163
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4413113991419475
+Epoch 164
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4397600094477336
+Epoch 165
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4382120768229167
+Epoch 166
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.436718265215556
+Epoch 167
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.435236136118571
+Epoch 168
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4336249033610027
+Epoch 169
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.432114799817403
+Epoch 170
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.430574854214986
+Epoch 171
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4291508197784424
+Epoch 172
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4275916814804077
+Epoch 173
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4260824918746948
+Epoch 174
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4245287974675496
+Epoch 175
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.422838807106018
+Epoch 176
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.421281059583028
+Epoch 177
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.419826825459798
+Epoch 178
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4183884461720784
+Epoch 179
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4168413877487183
+Epoch 180
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4152045249938965
+Epoch 181
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4136468569437664
+Epoch 182
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4121260245641072
+Epoch 183
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.410594900449117
+Epoch 184
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.408919374148051
+Epoch 185
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4073144992192586
+Epoch 186
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4058589537938435
+Epoch 187
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4042831659317017
+Epoch 188
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.4028393030166626
+Epoch 189
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.401227553685506
+Epoch 190
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.3995620012283325
+Epoch 191
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.3979997237523396
+Epoch 192
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.3963265419006348
+Epoch 193
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.3948185443878174
+Epoch 194
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.39324152469635
+Epoch 195
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.3916335105895996
+Epoch 196
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.390115737915039
+Epoch 197
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.3885660966237385
+Epoch 198
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.3869486252466838
+Epoch 199
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.385353406270345
+Epoch 200
+-----------------
+note length:  155
+note length:  155
+note length:  155
+average loss = 1.383617361386617
+Done!
+Saved PyTorch Model State to model.pth

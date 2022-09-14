@@ -306,11 +306,14 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             # print(f'j is {j}')
             input_roll = np.expand_dims(pianoroll[start_time_step:start_time_step + 64, :], 0)
             # print(f'input shape is {input_roll.shape}')
-            z = model.layers[1].predict(input_roll)
+            # z = model.layers[1].predict(input_roll)
+            # encode_value = model.encode_(input_rol)
+            # z, vq_loss = model.vq_layer(encode_value)
+            z, vq_loss = model.vq_layer(model.encode_(input_roll))
             curr_factor = direction * (np.random.uniform(-1, 1) + factor)
             print(f'factor is {curr_factor}')
             z_new = z + curr_factor * feature_vector
-            reconstruction_new = model.layers[2].predict(z_new)
+            reconstruction_new = model.decode_(z_new)
             result_new = util.result_sampling(np.concatenate(list(reconstruction_new), axis=-1))[0]
             tensile_new = np.squeeze(reconstruction_new[-2])
             diameter_new = np.squeeze(reconstruction_new[-1])

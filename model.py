@@ -169,19 +169,19 @@ class VQVAE(BaseVAE):
 
         # self.decoder = nn.Sequential(*modules)
 
-    def encode(self, input: Tensor) -> List[Tensor]:
+    def encode_(self, input1: Tensor) -> List[Tensor]:
         """
         Encodes the input by passing through the encoder network
         and returns the latent codes.
         :param input: (Tensor) Input tensor to encoder [N x C x H x W]
         :return: (Tensor) List of latent codes
         """
-        output1, states = self.egru(input)
+        output1, states = self.egru(input1)
         # output1 = torch.tensor(output1)
         result, states1 = self.gru(output1)
         return [result]
 
-    def decode(self, z: Tensor) -> Tensor:
+    def decode_(self, z: Tensor) -> Tensor:
         """
         Maps the given latent codes
         onto the image space.
@@ -195,9 +195,9 @@ class VQVAE(BaseVAE):
         return result
 
     def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
-        encoding = self.encode(input)[0]
+        encoding = self.encode_(input)[0]
         quantized_inputs, vq_loss = self.vq_layer(encoding)
-        return [self.decode(quantized_inputs), input, vq_loss]
+        return [self.decode_(quantized_inputs), input, vq_loss]
 
     def loss_function(self,
                       *args,
