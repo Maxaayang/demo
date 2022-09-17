@@ -270,7 +270,7 @@ class VQVAE(BaseVAE):
         """
 
         # result = self.decoder(z)
-        print("z.shape", z.shape)
+        # print("z.shape", z.shape)
         output1, states = self.dgru(z)
         result, states1 = self.gru(output1)
         return result
