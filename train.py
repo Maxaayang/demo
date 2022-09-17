@@ -44,6 +44,7 @@ for t in range(epochs):
         for feat in y.keys():
             y[feat]=y[feat].to(device)
         # print("train X ", X)
+        print("X.shape", X.shape)
         pred, input, loss = model(X)
         avg_loss += loss.item()
 

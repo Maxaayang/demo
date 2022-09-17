@@ -48,8 +48,8 @@ DEBUG = True
 # note feature: pitch, step, duration
 batch_size = 64
 sequence_lenth = 1
-max_file_num = 12
-epochs = 200
+max_file_num = 2000
+epochs = 10000
 learning_rate = 0.005
 
 loss_weight = [0.1, 20.0, 1.0]

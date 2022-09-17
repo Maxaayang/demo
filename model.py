@@ -9,7 +9,7 @@ from typing import List, Callable, Union, Any, TypeVar, Tuple
 # from torch import tensor as Tensor
 Tensor = TypeVar('torch.tensor')
 
-class VectorQuantizer(nn.Module):
+class VectorQuantizer1(nn.Module):
     """
     Reference:
     [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
@@ -23,11 +23,13 @@ class VectorQuantizer(nn.Module):
         self.beta = beta
 
     def forward(self, input):
+        input = np.array(input)
         if self._axis != -1:
             input = input.transpose(self._axis, -1)
 
         latents_shape = input.shape
         # Compute L2 distance between latents and embedding weights
+        input = torch.from_numpy(input).cuda()
         distances = (torch.sum(input ** 2, axis=-1, keepdim=True)
                      - 2 * torch.matmul(input, self.embedding.weight.T)
                      + torch.sum(self.embedding.weight ** 2, axis=-1))
@@ -40,6 +42,10 @@ class VectorQuantizer(nn.Module):
         # Convert to one-hot encodings
         device = input.device
         encoding_one_hot = torch.zeros(ids.size(0), num_embeddings, device=device)
+        # print("ids ", ids)
+        # print("ids.shape ", ids.shape)
+        # print("distances.shape", distances.shape)
+        # print("encoding_one_hot.shape ", encoding_one_hot.shape)
         encoding_one_hot.scatter_(1, ids, 1)  # [BHW x K]
 
         # Quantize the latents
@@ -56,6 +62,80 @@ class VectorQuantizer(nn.Module):
         quantized_latents = input + (quantized_latents - input).detach()
 
         return quantized, vq_loss
+
+class VectorQuantizer(nn.Module):
+    """
+    VQ-VAE layer: Input any tensor to be quantized. 
+    Args:
+        embedding_dim (int): the dimensionality of the tensors in the
+          quantized space. Inputs to the modules must be in this format as well.
+        num_embeddings (int): the number of vectors in the quantized space.
+        commitment_cost (float): scalar which controls the weighting of the loss terms (see
+          equation 4 in the paper - this variable is Beta).
+    """
+    def __init__(self):
+        super().__init__()
+        self.embedding_dim = embedding_dim
+        self.num_embeddings = num_embeddings
+        self.commitment_cost = beta
+        
+        # initialize embeddings
+        self.embeddings = nn.Embedding(self.num_embeddings, self.embedding_dim).cuda()
+        
+    def forward(self, x):
+        # [B, C, H, W] -> [B, H, W, C]
+        # print("x.shape ", x.shape)
+        
+        # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+        # TODO 这里训练时要注释掉
+        device = torch.device('cuda:0')
+        x = x.to(device)
+        x = x.squeeze(dim=1)
+
+        # x = x.permute(0, 2, 3, 1).contiguous()
+        # print("x", x)
+        x = x.permute(0, 2, 1).contiguous()
+        # [B, H, W, C] -> [BHW, C]
+        flat_x = x.reshape(-1, self.embedding_dim)
+        # flat_x = flat_x.to(device)
+        
+        encoding_indices = self.get_code_indices(flat_x)
+        quantized = self.quantize(encoding_indices)
+        quantized = quantized.view_as(x) # [B, H, W, C]
+        
+        if not self.training:
+            quantized = quantized.permute(0, 3, 1, 2).contiguous()
+            return quantized
+        
+        # embedding loss: move the embeddings towards the encoder's output
+        q_latent_loss = F.mse_loss(quantized, x.detach())
+        # commitment loss
+        e_latent_loss = F.mse_loss(x, quantized.detach())
+        loss = q_latent_loss + self.commitment_cost * e_latent_loss
+
+        # Straight Through Estimator
+        quantized = x + (quantized - x).detach()
+        
+        # quantized = quantized.permute(0, 3, 1, 2).contiguous()
+        quantized = quantized.permute(0, 2, 1).contiguous()
+        # quantized = torch.squeeze(quantized)
+        return quantized, loss
+    
+    def get_code_indices(self, flat_x):
+        # compute L2 distance
+        # print("self.embeddings.weight ", self.embeddings.weight)
+        distances = (
+            torch.sum(flat_x ** 2, dim=1, keepdim=True) +
+            torch.sum(self.embeddings.weight ** 2, dim=1) -
+            2. * torch.matmul(flat_x, self.embeddings.weight.t())
+        ) # [N, M]
+        encoding_indices = torch.argmin(distances, dim=1) # [N,]
+        return encoding_indices
+    
+    def quantize(self, encoding_indices):
+        """Returns embedding tensor for a batch of indices."""
+        return self.embeddings(encoding_indices) 
 
 class ResidualLayer(nn.Module):
 
@@ -190,6 +270,7 @@ class VQVAE(BaseVAE):
         """
 
         # result = self.decoder(z)
+        print("z.shape", z.shape)
         output1, states = self.dgru(z)
         result, states1 = self.gru(output1)
         return result

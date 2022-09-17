@@ -1,5 +1,6 @@
 import pretty_midi
 import numpy as np
+import torch
 from params import *
 import pickle
 import util
@@ -305,18 +306,29 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             # print(f'start_time_step is {start_time_step}')
             # print(f'j is {j}')
             input_roll = np.expand_dims(pianoroll[start_time_step:start_time_step + 64, :], 0)
+            input_roll = torch.Tensor(input_roll).cuda()
             # print(f'input shape is {input_roll.shape}')
             # z = model.layers[1].predict(input_roll)
-            # encode_value = model.encode_(input_rol)
-            # z, vq_loss = model.vq_layer(encode_value)
-            z, vq_loss = model.vq_layer(model.encode_(input_roll))
+            encode_value = model.encode_(input_roll)
+            # encode_value = torch.tensor(encode_value)
+            encode_value = torch.tensor( [item.cpu().detach().numpy() for item in encode_value] )
+            z, vq_loss = model.vq_layer(encode_value)
             curr_factor = direction * (np.random.uniform(-1, 1) + factor)
             print(f'factor is {curr_factor}')
-            z_new = z + curr_factor * feature_vector
+            # print("z.shape", z.shape)
+            # z = z.cpu()
+            # 这里之后得调试
+            # z_new = z + curr_factor * feature_vector
+            z_new = z
             reconstruction_new = model.decode_(z_new)
-            result_new = util.result_sampling(np.concatenate(list(reconstruction_new), axis=-1))[0]
-            tensile_new = np.squeeze(reconstruction_new[-2])
-            diameter_new = np.squeeze(reconstruction_new[-1])
+            reconstruction_new = reconstruction_new.cpu().detach().numpy()
+            # 这里注释掉了
+            # ss = np.concatenate(list(reconstruction_new), axis=-1)
+            result_new = util.result_sampling(reconstruction_new)[0]
+            # tensile_new = np.squeeze(reconstruction_new[-2])
+            # diameter_new = np.squeeze(reconstruction_new[-1])
+            tensile_new = reconstruction_new[-1]
+            diameter_new = reconstruction_new[-1]
 
             if result_roll is None:
                 result_roll = result_new

@@ -1,3 +1,4 @@
+from logging import root
 import numpy as np
 from params import *
 import pretty_midi
@@ -7,6 +8,7 @@ import copy
 
 def result_sampling(rolls):
     num = rolls.shape[0]
+    # print("rolls.shape ", rolls.shape)
     new_rolls = []
 
     for i in range(num):
