@@ -54,9 +54,9 @@ for t in range(epochs):
     
     avg_loss /= len(loader)
     print(f"average loss = {avg_loss}")
-    if (t+1) % 200 == 0:
-        torch.save(model, "./model/model%d.pth" % (t+1))
+    if (t+1) % epochs == 0:
+        torch.save(model.state_dict, "./model/model_vae%d.pth" % (t+1))
 print("Done!")
 
-torch.save(model.state_dict(), SAVE_MODEL_NAME)
+# torch.save(model.state_dict(), SAVE_MODEL_NAME)
 print(f"Saved PyTorch Model State to {SAVE_MODEL_NAME}")

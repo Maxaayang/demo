@@ -13,7 +13,7 @@ diameter_high_feature_vector = pickle.load(open('model/diameter_high_feature_vec
 
 tensile_up_down_feature_vector = pickle.load(open('model/tensile_up_down_feature_vector','rb'))
 
-
+# 敲击
 def beat_time(pm, beat_division=4):
     beats = pm.get_beats()
 
@@ -23,10 +23,11 @@ def beat_time(pm, beat_division=4):
         for j in range(beat_division):
             divided_beats.append((beats[i + 1] - beats[i]) / beat_division * j + beats[i])
     divided_beats.append(beats[-1])
-    down_beats = pm.get_downbeats()
+    down_beats = pm.get_downbeats() # 重拍
     down_beat_indices = []
     for down_beat in down_beats:
         # np.argwhere 寻找满足条件的坐标
+        # 获取重击在全部敲击中的位置
         down_beat_indices.append(np.argwhere(divided_beats == down_beat)[0][0])
 
     return np.array(divided_beats),np.array(down_beat_indices)
@@ -43,10 +44,12 @@ def find_active_range(rolls, down_beat_indices):
     else:
         return None
 
+    # 记录每个小节中哪一个是有声音的
     track_filled = []
     for roll in rolls:
         bar_filled = []
         for bar_index in down_beat_indices:
+            # 统计这一段音符中有多少是有声音的
             bar_filled.append(np.count_nonzero(roll[:,bar_index:bar_index+SAMPLES_PER_BAR]) > 0)
         track_filled.append(bar_filled)
 
@@ -54,6 +57,7 @@ def find_active_range(rolls, down_beat_indices):
     two_track_filled_bar = np.count_nonzero(track_filled[:2,:], axis=0) == 2
     filled_indices = []
 
+    # 如果某个间隔中所有的音符都有声音, 那么就将这个间隔记录下来
     for i in range(0,len(two_track_filled_bar)-interval+1,SLIDING_WINDOW):
         if np.sum(two_track_filled_bar[i:i+interval]) == interval:
             filled_indices.append((i,i+interval))
@@ -63,11 +67,14 @@ def find_active_range(rolls, down_beat_indices):
 
 def stack_data(rolls):
     melody_roll,bass_roll = rolls
-    new_bass_roll = np.zeros((12, bass_roll.shape[1]))
+    new_bass_roll = np.zeros((12, bass_roll.shape[1]))  # bass_roll.shape[1], 445
     bass_start_roll_new = np.zeros((1, bass_roll.shape[1]))
     bass_empty_roll = np.zeros((1, bass_roll.shape[1]))
 
+    # 把声音从128压缩到12, 并把bass_empty_roll表示为1, 如果是新开始的note, 则在bass_start_roll_new中表示为1, 
+    # 并将空白的时间找出来, 在bass_empty_roll表示为1
     for step in range(bass_roll.shape[1]):
+        # 寻找那个时间的pitch是不为零的, 即是发声的, 这个想当于从128压缩到了12
         pitch = np.where(bass_roll[:, step] != 0)[0] % 12
         original_pitch = np.where(bass_roll[:, step] != 0)[0]
 
@@ -77,11 +84,12 @@ def stack_data(rolls):
                 new_bass_roll[new_pitch, step] = 1
 
             # a note start
-            if bass_roll[original_pitch, step] == 1:
+            if bass_roll[original_pitch, step] == 1:    # 1表示的是开始的时间
                 bass_start_roll_new[:, step] = 1
         else:
             bass_empty_roll[:, step] = 1
 
+    # 将melody往低移动24的音高
     new_melody_roll = np.zeros((73,melody_roll.shape[1]))
     melody_start_roll_new = np.zeros((1, melody_roll.shape[1]))
     melody_empty_roll = np.zeros((1, melody_roll.shape[1]))
@@ -105,10 +113,10 @@ def stack_data(rolls):
 
         else:
             melody_empty_roll[:, step] = 1
-
+    # 这个是按照列来拼起来了
     concatenated_roll = np.concatenate([new_melody_roll,melody_empty_roll,melody_start_roll_new,
                                         new_bass_roll,bass_empty_roll,bass_start_roll_new])
-    return concatenated_roll.transpose()
+    return concatenated_roll.transpose()    # 把行和列换一下, 相当于方阵的转置
 
 def prepare_one_x(roll_concat,filled_indices,down_beat_indices):
 
@@ -118,7 +126,7 @@ def prepare_one_x(roll_concat,filled_indices,down_beat_indices):
         if end == len(down_beat_indices):
             if roll_concat[start_index:, :].shape[0] < (SAMPLES_PER_BAR * SEGMENT_BAR_LENGTH):
                 fill_num = SAMPLES_PER_BAR * SEGMENT_BAR_LENGTH  - roll_concat[start_index:, :].shape[0]
-                fill_roll = np.vstack([roll_concat[start_index:, :],np.zeros((fill_num,89))])
+                fill_roll = np.vstack([roll_concat[start_index:, :],np.zeros((fill_num,89))])   # 按垂直方向堆叠成一个新的array
             else:
                 fill_roll = roll_concat[start_index:start_index+SAMPLES_PER_BAR * SEGMENT_BAR_LENGTH]
             if fill_roll.shape[0] != (SAMPLES_PER_BAR * SEGMENT_BAR_LENGTH):
@@ -149,37 +157,44 @@ def get_roll_with_continue(track_num, track,times):
     previous_end_step = 0
     previous_start_step = 0
     previous_pitch = 0
+    # notes, 将音轨提出来, 并取所有音符
     for note in track.notes:
 
+        # time_step_start, 在敲击中比note开始的早的最后一个位置
         time_step_start = np.where(note.start >= times)[0][-1]
 
+        # time_step_stop, 在敲击中比note结束的晚的第一个位置
         if note.end > times[-1]:
             time_step_stop = len(times) - 1
         else:
             time_step_stop = np.where(note.end <= times)[0][0]
 
         # snap note to the grid
-        # snap start time step
+        # snap start time step, 提前开始了多少, 如果大于阈值的话, 就将times中的位置后移一位
         if time_step_stop > time_step_start:
             start_ratio = (times[time_step_start+1] - note.start) / (times[time_step_start+1] - times[time_step_start])
             if start_ratio < snap_ratio:
                 if time_step_stop - time_step_start > 1:
                     time_step_start += 1
-        # snap end time step
+        # snap end time step, 提前结束的多少, 如果大于阈值的话, 就将times中的位置前移一位
             end_ratio = (note.end - times[time_step_stop-1]) / (times[time_step_stop] - times[time_step_stop-1])
             if end_ratio < snap_ratio:
                 if time_step_stop - time_step_start > 1:
                     time_step_stop -= 1
 
         if track_num == 0:
-            # melody track, ensure single melody line
+            # melody track, ensure single melody line, 旋律
+            # 如果比前一个note提前开始了, 则跳过
             if previous_start_step > time_step_start:
                 continue
+            # 如果与前一个音符同时开始以及结束, 则跳过
             if previous_end_step == time_step_stop and previous_start_step == time_step_start:
                 continue
+            # pitch 音高, 将当前音符开始的时间标为1, 开始时间之后的全部标为2
             piano_roll[note.pitch, time_step_start] = 1
             piano_roll[note.pitch, time_step_start + 1:time_step_stop] = 2
 
+            # 如果当前note开始时, 前一个note还没有结束, 就把前一个note的音高从当前note开始的时间清零
             if time_step_start < previous_end_step:
                 piano_roll[previous_pitch, time_step_start:] = 0
             previous_pitch = note.pitch
@@ -187,7 +202,7 @@ def get_roll_with_continue(track_num, track,times):
             previous_start_step = time_step_start
 
         elif track_num == 1:
-            # for bass, select the lowest pitch if the time range is the same
+            # for bass, select the lowest pitch if the time range is the same, 低音
             if previous_end_step == time_step_stop and previous_start_step == time_step_start:
                 continue
             if previous_start_step > time_step_start:
@@ -205,7 +220,7 @@ def get_roll_with_continue(track_num, track,times):
 
     return piano_roll
 
-
+# sample_times, 扩大四倍之后的敲击
 def get_piano_roll(pm,sample_times):
     """
 
@@ -231,13 +246,14 @@ def preprocess_midi(midi_file):
         return
 
     # 1341, 84
-    # 抽样, 长度变为之前的四倍, 满足条件的坐标
+    # 抽样, 敲击变为之前的四倍, 重击在所有敲击中的位置
     sixteenth_time, down_beat_indices = beat_time(pm, beat_division=int(SAMPLES_PER_BAR / 4))
     rolls = get_piano_roll(pm, sixteenth_time)
 
     melody_roll = rolls[0]
     bass_roll = rolls[1]
 
+    # 寻找所有音符都有声音的间隔
     # [(12, 16), (16, 20), (20, 24), (24, 28), (36, 40), (40, 44), (44, 48), (68, 72)]
     filled_indices = find_active_range([melody_roll, bass_roll], down_beat_indices)
 
@@ -305,30 +321,34 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             print(f'number_of_iteration is {i}')
             # print(f'start_time_step is {start_time_step}')
             # print(f'j is {j}')
-            input_roll = np.expand_dims(pianoroll[start_time_step:start_time_step + 64, :], 0)
+            input_roll = np.expand_dims(pianoroll[start_time_step:start_time_step + 64, :], 0)  # (1, 64, 89)
             input_roll = torch.Tensor(input_roll).cuda()
             # print(f'input shape is {input_roll.shape}')
             # z = model.layers[1].predict(input_roll)
             encode_value = model.encode_(input_roll)
             # encode_value = torch.tensor(encode_value)
-            encode_value = torch.tensor( [item.cpu().detach().numpy() for item in encode_value] )
-            z, vq_loss = model.vq_layer(encode_value)
+            encode_value = torch.tensor( [item.cpu().detach().numpy() for item in encode_value] ) # (1, 1, 64, 96)
+            encode_value = torch.squeeze(encode_value, dim = 1) # (1, 64, 96)
+            z, vq_loss = model.vq_layer(encode_value)   # (1, 64, 96)
             curr_factor = direction * (np.random.uniform(-1, 1) + factor)
             print(f'factor is {curr_factor}')
             # print("z.shape", z.shape)
             # z = z.cpu()
             # 这里之后得调试
-            # z_new = z + curr_factor * feature_vector
-            z_new = z
-            reconstruction_new = model.decode_(z_new)
-            reconstruction_new = reconstruction_new.cpu().detach().numpy()
-            # 这里注释掉了
+            z = torch.tensor( [item.cpu().detach().numpy() for item in z] )
+            z_new = z + curr_factor * feature_vector
+            z_new = z_new.to('cuda:0')  # (1, 64, 96)
+            reconstruction_new = model.decode_(z_new)   # (1, 64, 1)
+            # reconstruction_new = reconstruction_new.cpu().detach().numpy()
+            # TODO 这里注释掉了
             # ss = np.concatenate(list(reconstruction_new), axis=-1)
-            result_new = util.result_sampling(reconstruction_new)[0]
-            # tensile_new = np.squeeze(reconstruction_new[-2])
-            # diameter_new = np.squeeze(reconstruction_new[-1])
-            tensile_new = reconstruction_new[-1]
-            diameter_new = reconstruction_new[-1]
+            # result_new = util.result_sampling(reconstruction_new)[0]
+            reconstruction_new = [item.cpu().detach().numpy() for item in reconstruction_new] 
+            result_new = util.result_sampling(np.concatenate(list(reconstruction_new), axis=-1))[0]
+            tensile_new = np.squeeze(reconstruction_new[-2])
+            diameter_new = np.squeeze(reconstruction_new[-1])
+            # tensile_new = reconstruction_new[-1]
+            # diameter_new = reconstruction_new[-1]
 
             if result_roll is None:
                 result_roll = result_new

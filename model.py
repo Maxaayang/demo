@@ -6,6 +6,7 @@ from torch.nn import functional as F
 from base import *
 from util import *
 from typing import List, Callable, Union, Any, TypeVar, Tuple
+import matplotlib.pyplot as plt
 # from torch import tensor as Tensor
 Tensor = TypeVar('torch.tensor')
 
@@ -89,14 +90,15 @@ class VectorQuantizer(nn.Module):
         # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         # TODO 这里训练时要注释掉
-        device = torch.device('cuda:0')
-        x = x.to(device)
-        x = x.squeeze(dim=1)
+        # device = torch.device('cuda:0')
+        # x = x.to(device)
+        # x = x.squeeze(dim=1)
 
         # x = x.permute(0, 2, 3, 1).contiguous()
         # print("x", x)
         x = x.permute(0, 2, 1).contiguous()
         # [B, H, W, C] -> [BHW, C]
+        x = x[:, :96, :]
         flat_x = x.reshape(-1, self.embedding_dim)
         # flat_x = flat_x.to(device)
         
@@ -173,6 +175,13 @@ class VQVAE(BaseVAE):
         self.gru = nn.GRU(rnn_dim, rnn_dim)
         self.relu = nn.LeakyReLU()
         self.dgru = nn.GRU(embedding_dim, rnn_dim)
+        self.linear = nn.Linear(rnn_dim, rnn_dim)
+        self.tensile_output = nn.Linear(rnn_dim, tension_output_dim)
+        self.diameter_output = nn.Linear(rnn_dim, tension_output_dim)
+        self.melody_rhythm_output = nn.Linear(rnn_dim, melody_note_start_dim)
+        self.melody_pitch_output = nn.Linear(rnn_dim, melody_output_dim)
+        self.bass_rhythm_output = nn.Linear(rnn_dim, bass_note_start_dim)
+        self.bass_pitch_output = nn.Linear(rnn_dim, bass_output_dim)
 
         # modules = []
         # # if hidden_dims is None:
@@ -257,8 +266,9 @@ class VQVAE(BaseVAE):
         :return: (Tensor) List of latent codes
         """
         output1, states = self.egru(input1)
-        # output1 = torch.tensor(output1)
-        result, states1 = self.gru(output1)
+        output2, states1 = self.gru(output1)
+        result = self.linear(output2)
+
         return [result]
 
     def decode_(self, z: Tensor) -> Tensor:
@@ -271,8 +281,22 @@ class VQVAE(BaseVAE):
 
         # result = self.decoder(z)
         # print("z.shape", z.shape)
+        # TODO
+        # z = torch.tensor(z)
+        # z = torch.tensor( [item.cpu().detach().numpy() for item in z] ).to('cuda:0')
+        # z = z.squeeze(dim=1)
+        # TODO 这里需要6个全连接层
         output1, states = self.dgru(z)
-        result, states1 = self.gru(output1)
+        output2, states1 = self.gru(output1)
+        melody_pitch_output = self.melody_pitch_output(output2)
+        melody_rhythm_output = self.melody_rhythm_output(output2)
+        bass_pitch_output = self.bass_pitch_output(output2)
+        bass_rhythm_output = self.bass_rhythm_output(output2)
+        tensile_output = self.tensile_output(output2)
+        diameter_output = self.diameter_output(output2)
+        result = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
+                    tensile_output, diameter_output
+                    ]
         return result
 
     def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
@@ -327,3 +351,73 @@ class MyLoss(torch.nn.Module):
         c = self.duration_loss(pred['duration'], y['duration'])
         return a*self.weight[0]+b*self.weight[1]+c*self.weight[2]
 
+def draw_two_figure(tensile_strain, diameter, first_name='tensile strain',
+                    second_name='diameter',
+                    file_name='default.png', y_label='tension',
+                    title='tension figure',
+                    save=False):
+    if tensile_strain.shape[0] == 64:
+        fig = plt.figure(figsize=(5, 5))
+        ax = fig.add_subplot(1, 1, 1)
+        tensile_strain = tensile_strain.detach().cpu().numpy()
+        diameter = diameter.detach().cpu().numpy()
+        ax.plot(tensile_strain, label=first_name)
+        ax.plot(diameter, label=second_name)
+        ax.legend()
+        ax.set_ylabel(y_label)
+        ax.set_xlabel('timestep')
+        ax.set_title(title)
+
+    if save is True:
+        plt.savefig(file_name)
+
+    plt.show()
+    plt.close('all')
+
+def manipuate_latent_space(piano_roll, vector_up_t, vector_high_d, vector_up_down_t,
+                                                 vae,t_up_factor,d_high_factor,t_up_down_factor,
+                                                   change_t=True,change_d=False,change_t_up_down=False,
+                                                   with_input=True,draw_tension=True):
+
+    if with_input and piano_roll is not None:
+        piano_roll = np.expand_dims(piano_roll, 0)
+        piano_roll = torch.from_numpy(piano_roll).float().to('cuda:0')
+        z = vae.encode_(piano_roll)
+    else:
+        z = np.random.normal(size=(1,z_dim))
+
+    reconstruction = vae.decode_(z)
+
+    # TODO
+    tensile_reconstruction = np.squeeze(reconstruction[-2])
+    diameter_reconstruction = np.squeeze(reconstruction[-1])
+
+    # recon_result = result_sampling(np.concatenate(list(reconstruction), axis=-1))[0]
+    changed_z = z
+    if change_t:
+        changed_z += t_up_factor * vector_up_t
+
+    if change_d:
+        # changed_z = torch.tensor( [item.cpu().detach().numpy() for item in changed_z] )
+        changed_z += d_high_factor * vector_high_d
+
+    if change_t_up_down:
+        changed_z += t_up_down_factor * vector_up_down_t
+
+    changed_reconstruction = vae.decode_(changed_z)
+
+    changed_recon_result = result_sampling(np.concatenate(list(changed_reconstruction), axis=-1))[0]
+    # changed_recon_result = changed_reconstruction.detach().cpu().numpy()
+
+    # TODO
+    # changed_tensile_reconstruction = np.squeeze(changed_reconstruction[-2])
+    changed_tensile_reconstruction = np.squeeze(changed_reconstruction[-2])
+
+    changed_diameter_reconstruction = np.squeeze(changed_reconstruction[-1])
+
+    if draw_tension:
+        draw_two_figure(tensile_reconstruction,diameter_reconstruction,title='original tension')
+        draw_two_figure(changed_tensile_reconstruction,changed_diameter_reconstruction,title='changed tension')
+
+
+    return piano_roll, changed_recon_result

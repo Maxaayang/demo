@@ -58,7 +58,8 @@ def roll_to_pretty_midi(rolls,pm_old):
             if previous_m_pitch != -1:
                 ## set the end
 
-                if melody_pitch == melody_dim - 1 or melody_start or melody_pitch != previous_m_pitch or timestep == \
+                # TODO melody_start.all()
+                if melody_pitch == melody_dim - 1 or melody_start.all() or melody_pitch != previous_m_pitch or timestep == \
                         rolls.shape[0] - 1:
                     if previous_m_start:
                         m_end_time = timestep * step_time
@@ -68,8 +69,9 @@ def roll_to_pretty_midi(rolls,pm_old):
 
             ## set the start
             if melody_pitch != melody_dim - 1:
-
-                if timestep == 0 or melody_start or rolls[timestep - 1, melody_pitch] == 0:
+                
+                # TODO melody_start.all(), rolls[timestep - 1, melody_pitch].all()
+                if timestep == 0 or melody_start.all() or rolls[timestep - 1, melody_pitch].all() == 0:
                     m_start_time = timestep * step_time
                     previous_m_start = True
                     if previous_m_pitch != -1:

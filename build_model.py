@@ -67,6 +67,7 @@ def build_model():
     kl_loss = 0.5 *kl_loss
 
     kl_loss = beta(kl_loss)
+    # https://www.jianshu.com/p/223e13ce35a2?u_atoken=f201905d-fb1b-484a-827d-859f4bb214a0&u_asession=01nrQ17WepaF_J1TCv8PZaIZuYLGnYBcZ4DWE4D2l50S8LqgXbEz0N3riCtz8oJlOjX0KNBwm7Lovlpxjd_P_q4JsKWYrT3W_NKPr8w6oU7K9yYtUSKuWfYomXFit3_UC5Pn5sJEo90JdruCukG2OVYmBkFo3NEHBv0PZUm6pbxQU&u_asig=05oEbVwSzUZF-mtwraded9ERi4CxOzuiYzDi_BCEXmJ0ZeSiisN_lmpKpA-Cs80UqeAfEodcMgcM6a9teedKr-Mz1j5iaLBJA85LvpCbO-AXAkVswsfppHbDydXikdA8-ZCsjrOX3Y0Vjb13QzwWEvTQYoes4QlPPYJ4TSoSYZtLH9JS7q8ZD7Xtz2Ly-b0kmuyAKRFSVJkkdwVUnyHAIJzXpfbz50YM0RMA3barHc_9AO14Q2vEGaAqC9fgdU__7NLoLNx2oKfcIBo1yjPF0Bne3h9VXwMyh6PgyDIVSG1W-zQZ_qalgy3JzZcmP3eZL_D1Woc7UlI2Op9PXm8noS-cYWnfUV0kOqH32rf9D7hrsMRBkGxRRre9kPLZgPaxWImWspDxyAEEo4kbsryBKb9Q&u_aref=CmY01xtvkd52QEUGVpOtdz0vh6U%3D
     tensile_middle_output = TimeDistributed(Dense(tension_middle_dim, activation='elu'),
                                             name='tensile_strain_dense1')(rnn2_output)
 
