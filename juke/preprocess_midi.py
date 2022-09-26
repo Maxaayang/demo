@@ -1,18 +1,20 @@
+import sys
+sys.path.append("..")
 import pretty_midi
 import numpy as np
 import torch
-from params import *
+from juke.juke_params import *
 import pickle
 import util
 from torch import nn
 
-tensile_up_feature_vector = pickle.load(open('../model/tensile_up_feature_vector','rb'))
-diameter_up_feature_vector = pickle.load(open('../model/diameter_up_feature_vector','rb'))
+tensile_up_feature_vector = pickle.load(open('./model/tensile_up_feature_vector','rb'))
+diameter_up_feature_vector = pickle.load(open('./model/diameter_up_feature_vector','rb'))
 
-tensile_high_feature_vector = pickle.load(open('../model/tensile_high_feature_vector','rb'))
-diameter_high_feature_vector = pickle.load(open('../model/diameter_high_feature_vector','rb'))
+tensile_high_feature_vector = pickle.load(open('./model/tensile_high_feature_vector','rb'))
+diameter_high_feature_vector = pickle.load(open('./model/diameter_high_feature_vector','rb'))
 
-tensile_up_down_feature_vector = pickle.load(open('../model/tensile_up_down_feature_vector','rb'))
+tensile_up_down_feature_vector = pickle.load(open('./model/tensile_up_down_feature_vector','rb'))
 
 # 敲击
 def beat_time(pm, beat_division=4):
@@ -343,12 +345,12 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             reconstruction_new = model.decoders[0](z_new)   # (1, 64, 1)
             reconstruction_new = reconstruction_new.to('cuda')
 
-            tensile_output_function = nn.Linear(rnn_dim, tension_output_dim).to('cuda')
-            diameter_output_function = nn.Linear(rnn_dim, tension_output_dim).to('cuda')
-            melody_rhythm_output_function = nn.Linear(rnn_dim, melody_note_start_dim).to('cuda')
-            melody_pitch_output_function = nn.Linear(rnn_dim, melody_output_dim).to('cuda')
-            bass_rhythm_output_function = nn.Linear(rnn_dim, bass_note_start_dim).to('cuda')
-            bass_pitch_output_function = nn.Linear(rnn_dim, bass_output_dim).to('cuda')
+            tensile_output_function = nn.Linear(embedding_dim, tension_output_dim).to('cuda')
+            diameter_output_function = nn.Linear(embedding_dim, tension_output_dim).to('cuda')
+            melody_rhythm_output_function = nn.Linear(embedding_dim, melody_note_start_dim).to('cuda')
+            melody_pitch_output_function = nn.Linear(embedding_dim, melody_output_dim).to('cuda')
+            bass_rhythm_output_function = nn.Linear(embedding_dim, bass_note_start_dim).to('cuda')
+            bass_pitch_output_function = nn.Linear(embedding_dim, bass_output_dim).to('cuda')
 
             melody_pitch_output = melody_pitch_output_function(reconstruction_new)
             melody_rhythm_output = melody_rhythm_output_function(reconstruction_new)

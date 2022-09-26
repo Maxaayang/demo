@@ -13,7 +13,7 @@ util.setup_musescore()
 
 # vqvae = torch.load("./model/model10000.pth")
 vqvae = model.VQVAE(in_channels, embedding_dim, num_embeddings)
-vqvae.state_dict = torch.load("./model/model10.pth")
+vqvae.state_dict = torch.load("./model/model_vae20000.pth")
 vqvae = vqvae.to('cuda:0')
 
 melody_file = './r_data/crying_sand.mid'

@@ -391,7 +391,7 @@ def manipuate_latent_space(piano_roll, vector_up_t, vector_high_d, vector_up_dow
     reconstruction = vae.decode_(z)
 
     # TODO
-    tensile_reconstruction = np.squeeze(reconstruction[-1]) # (1, 64, 1) (1, 64, 256)
+    tensile_reconstruction = np.squeeze(reconstruction[-2]) # (1, 64, 1) (1, 64, 256)
     tensile_reconstruction = tensile_reconstruction.cpu().detach()
     diameter_reconstruction = np.squeeze(reconstruction[-1])
     diameter_reconstruction = diameter_reconstruction.cpu().detach()

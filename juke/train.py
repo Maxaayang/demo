@@ -2,7 +2,7 @@ import sys
 sys.path.append("..")
 # from juke.vqvae import VQVAE
 from vqvae import VQVAE
-from juke.params import *
+from juke.juke_params import *
 import torch
 from torch.utils.data import DataLoader
 from juke.dataload import SequenceMIDI
@@ -36,9 +36,10 @@ block_kwargs = dict(width=width, depth=depth, m_conv=m_conv, dilation_growth_rat
 model = VQVAE(input_shape, levels, downs_t, strides_t, emb_width, l_bins, mu, commit, \
               spectral, multispectral, multipliers, use_bottleneck, **block_kwargs)
 
+model.state_dict = torch.load("../model/juke_vae20.pth")
 optimizer = torch.optim.SGD(model.parameters(), lr)
 
-vqvae = model.to(device)
+model = model.to(device)
 
 print("Start trainning...")
 size = len(loader.dataset)

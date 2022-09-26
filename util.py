@@ -34,6 +34,7 @@ def result_sampling(rolls):
 
 def roll_to_pretty_midi(rolls,pm_old):
 
+    # TEMPO = 90
     melody_notes = []
     bass_notes = []
     step_time = 60 / TEMPO / 4
