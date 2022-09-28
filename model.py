@@ -102,8 +102,9 @@ class VectorQuantizer(nn.Module):
         flat_x = x.reshape(-1, self.embedding_dim)
         # flat_x = flat_x.to(device)
         
-        encoding_indices = self.get_code_indices(flat_x)
-        quantized = self.quantize(encoding_indices)
+        # encoding_indices = self.get_code_indices(flat_x)
+        min_distance, x_l = self.get_code_indices(flat_x)
+        quantized = self.quantize(x_l)
         quantized = quantized.view_as(x) # [B, H, W, C]
         
         if not self.training:
@@ -132,12 +133,22 @@ class VectorQuantizer(nn.Module):
             torch.sum(self.embeddings.weight ** 2, dim=1) -
             2. * torch.matmul(flat_x, self.embeddings.weight.t())
         ) # [N, M]
-        encoding_indices = torch.argmin(distances, dim=1) # [N,]
-        return encoding_indices
+
+        # distances = (
+        #     torch.sum(flat_x ** 2, dim=-1, keepdim=True) +
+        #     torch.sum(self.embeddings.weight ** 2, dim=0, keepdim=True) -
+        #     2. * torch.matmul(flat_x, self.embeddings.weight.t())
+        # ) # [N, M]
+
+        min_distance, x_l = torch.min(distances, dim=-1) # (min, min_indices)
+        # encoding_indices = torch.argmin(distances, dim=1) # [N,]
+        return min_distance, x_l
     
     def quantize(self, encoding_indices):
         """Returns embedding tensor for a batch of indices."""
-        return self.embeddings(encoding_indices) 
+        x = F.embedding(encoding_indices, self.embeddings)
+        return x
+        # return self.embeddings(encoding_indices) 
 
 class ResidualLayer(nn.Module):
 

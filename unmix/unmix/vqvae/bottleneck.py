@@ -56,20 +56,21 @@ class BottleneckBlock(nn.Module):
             self.k_sum.data.mul_(expected_usage)
         self.threshold = threshold
 
+    # x_l 向量的坐标
     def update_k(self, x, x_l):
         mu, emb_width, k_bins = self.mu, self.emb_width, self.k_bins
         with t.no_grad():
             # Calculate new centres
             x_l_onehot = t.zeros(
-                k_bins, x.shape[0], device=x.device)  # k_bins, N * L
+                k_bins, x.shape[0], device=x.device)  # k_bins, N * L (2048, 64)
             # which codebook vector did we use for each feature (k_bins,num_enc_vectors)
-            x_l_onehot.scatter_(0, x_l.view(1, x.shape[0]), 1)
+            x_l_onehot.scatter_(0, x_l.view(1, x.shape[0]), 1)  # 将匹配到的位置标记为1
             # k_bins, w: the sum of the encoder output, which are used with this codebook vector.
-            _k_sum = t.matmul(x_l_onehot, x)
+            _k_sum = t.matmul(x_l_onehot, x)    # 把x的值对应到码本的具体位置
 
-            _k_elem = x_l_onehot.sum(dim=-1)  # k_bins
-            y = self._tile(x)
-            _k_rand = y[t.randperm(y.shape[0])][:k_bins]
+            _k_elem = x_l_onehot.sum(dim=-1)  # k_bins (2048), 每一个向量被使用的次数, 一次为0.01
+            y = self._tile(x)   # x (64, 96) -> (2048, 96)
+            _k_rand = y[t.randperm(y.shape[0])][:k_bins]    # 将y随机打乱
 
             # dist.broadcast(_k_rand, 0)
             # dist.all_reduce(_k_sum)
@@ -86,8 +87,8 @@ class BottleneckBlock(nn.Module):
             # Update centres
             old_k = self.k
             self.k_sum = mu * self.k_sum + (1. - mu) * _k_sum  # w, k_bins
-            self.k_elem = mu * self.k_elem + (1. - mu) * _k_elem  # k_bins
-            usage = (self.k_elem.view(k_bins, 1) >= self.threshold).float()
+            self.k_elem = mu * self.k_elem + (1. - mu) * _k_elem  # k_bins 
+            usage = (self.k_elem.view(k_bins, 1) >= self.threshold).float() # 把 k_elem 中大于1的元素标记出来, (2048)
             self.k = usage * (self.k_sum.view(k_bins, emb_width) / self.k_elem.view(k_bins, 1)) \
                 + (1 - usage) * _k_rand
             # x_l_onehot.mean(dim=-1)  # prob of each bin
@@ -130,10 +131,10 @@ class BottleneckBlock(nn.Module):
 
     def quantise(self, x):
         # Calculate latent code x_l
-        k_w = self.k.t().to('cuda')
+        k_w = self.k.t().to('cuda') # (96, 2048)
         distance = t.sum(x ** 2, dim=-1, keepdim=True) - 2 * t.matmul(x, k_w) + t.sum(k_w ** 2, dim=0,
-                                                                                      keepdim=True)  # (N * L, b)
-        min_distance, x_l = t.min(distance, dim=-1)
+                                                                                      keepdim=True)  # (N * L, b), (64, 2048)
+        min_distance, x_l = t.min(distance, dim=-1) # (min, min_indices)
         fit = t.mean(min_distance)
         return x_l, fit
 
@@ -176,8 +177,8 @@ class BottleneckBlock(nn.Module):
             self.init_k(x)
 
         # Quantise and dequantise through bottleneck
-        x_l, fit = self.quantise(x)
-        x_d = self.dequantise(x_l)
+        x_l, fit = self.quantise(x) # x_l 向量的坐标
+        x_d = self.dequantise(x_l)  # 找到向量
 
         # Update embeddings
         if update_k:

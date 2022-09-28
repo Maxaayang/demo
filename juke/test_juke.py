@@ -21,7 +21,7 @@ block_kwargs = dict(width=width, depth=depth, m_conv=m_conv, dilation_growth_rat
 vqvae = VQVAE(input_shape, levels, downs_t, strides_t, emb_width, l_bins, mu, commit, \
               spectral, multispectral, multipliers, use_bottleneck, **block_kwargs)
 
-vqvae.state_dict = torch.load("../model/juke_vae20.pth")
+vqvae.state_dict = torch.load("../model/juke_vae20000.pth")
 vqvae = vqvae.to('cuda:0')
 
 melody_file = '../r_data/crying_sand.mid'

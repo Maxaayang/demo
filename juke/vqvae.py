@@ -199,6 +199,7 @@ class VQVAE(nn.Module):
 
             # happens when deploying
             if (x_out.shape != x_in.shape):
+                # 这里把输入和输出的维度不一样处理了一下
                 x_out = F.pad(input=x_out, pad=(
                     0, x_in.shape[-1]-x_out.shape[-1]), mode='constant', value=0)
 
@@ -208,7 +209,7 @@ class VQVAE(nn.Module):
         # print(x_outs[0].shape)
         # Loss
 
-        recons_loss = t.zeros(()).to(x.device)
+        recons_loss = t.zeros(()).to(x.device)  # 0.0900
         x_target = x.float()
 
         for level in reversed(range(self.levels)):

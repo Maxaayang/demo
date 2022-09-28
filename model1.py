@@ -295,7 +295,7 @@ class VQVAE(BaseVAE):
         bass_rhythm_output = self.bass_rhythm_output(output2)
         tensile_output = self.tensile_output(output2)
         diameter_output = self.diameter_output(output2)
-        result = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
+        result = [output2, melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
                     tensile_output, diameter_output
                     ]
         return result

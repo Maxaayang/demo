@@ -21,7 +21,7 @@ lr = 0.1
 epochs = 20
 BASE_PATH = '../../data/lmd/**.mid'
 sequence_lenth = 1
-max_file_num = 20
+max_file_num = 5
 batch_size = 64
 
 SAMPLES_PER_BAR = 16

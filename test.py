@@ -65,6 +65,9 @@ result_roll, tensile_strain, diameter = four_bar_iterate(piano_roll_new,vqvae,
                                                          diameter_factor,
                                                          first_change)
 
+# torch.mean(torch.tensor(result_roll))
+# torch.mean(torch.tensor(piano_roll_new))
+
 pm_result = util.roll_to_pretty_midi(result_roll,pm_old)
 # ipd.Audio(pm_result.fluidsynth(fs=16000), rate=16000)
 

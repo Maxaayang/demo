@@ -332,7 +332,7 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             # encode_value = torch.tensor(encode_value)
             encode_value = torch.tensor( [item.cpu().detach().numpy() for item in encode_value] ) # (1, 1, 64, 96)
             encode_value = torch.squeeze(encode_value, dim = 1) # (1, 64, 12), 71, 332, 727, 227, 727, 168
-            zs, xs_quantised, commit_losses, quantiser_metrics = model.bottleneck(encode_value.to('cuda'))
+            zs, xs_quantised, commit_losses, quantiser_metrics = model.bottleneck(encode_value.to('cuda')) # 1206, 1130
             # z, vq_loss = model.vq_layer(encode_value)   # (1, 64, 96)
             curr_factor = direction * (np.random.uniform(-1, 1) + factor)
             print(f'factor is {curr_factor}')
@@ -342,6 +342,7 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             z = torch.tensor( [item.cpu().detach().numpy() for item in xs_quantised] )
             z_new = z + curr_factor * feature_vector
             z_new = z_new.to('cuda:0')  # (1, 64, 96)
+            reconstruction = model.decoders[0](z.to('cuda'))    # mean -0.0010, 0.0284
             reconstruction_new = model.decoders[0](z_new)   # (1, 64, 1)
             reconstruction_new = reconstruction_new.to('cuda')
 
