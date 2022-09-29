@@ -176,12 +176,12 @@ class VQVAE(BaseVAE):
         self.relu = nn.LeakyReLU()
         self.dgru = nn.GRU(embedding_dim, rnn_dim)
         self.linear = nn.Linear(rnn_dim, rnn_dim)
-        self.tensile_output = nn.Linear(rnn_dim, tension_output_dim)
-        self.diameter_output = nn.Linear(rnn_dim, tension_output_dim)
-        self.melody_rhythm_output = nn.Linear(rnn_dim, melody_note_start_dim)
-        self.melody_pitch_output = nn.Linear(rnn_dim, melody_output_dim)
-        self.bass_rhythm_output = nn.Linear(rnn_dim, bass_note_start_dim)
-        self.bass_pitch_output = nn.Linear(rnn_dim, bass_output_dim)
+        # self.tensile_output = nn.Linear(rnn_dim, tension_output_dim)
+        # self.diameter_output = nn.Linear(rnn_dim, tension_output_dim)
+        # self.melody_rhythm_output = nn.Linear(rnn_dim, melody_note_start_dim)
+        # self.melody_pitch_output = nn.Linear(rnn_dim, melody_output_dim)
+        # self.bass_rhythm_output = nn.Linear(rnn_dim, bass_note_start_dim)
+        # self.bass_pitch_output = nn.Linear(rnn_dim, bass_output_dim)
 
 
         # modules = []
@@ -289,15 +289,16 @@ class VQVAE(BaseVAE):
         # z = z.squeeze(dim=1)
         output1, states = self.dgru(z)
         output2, states1 = self.gru(output1)
-        melody_pitch_output = self.melody_pitch_output(output2)
-        melody_rhythm_output = self.melody_rhythm_output(output2)
-        bass_pitch_output = self.bass_pitch_output(output2)
-        bass_rhythm_output = self.bass_rhythm_output(output2)
-        tensile_output = self.tensile_output(output2)
-        diameter_output = self.diameter_output(output2)
-        result = [output2, melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
-                    tensile_output, diameter_output
-                    ]
+        # melody_pitch_output = self.melody_pitch_output(output2)
+        # melody_rhythm_output = self.melody_rhythm_output(output2)
+        # bass_pitch_output = self.bass_pitch_output(output2)
+        # bass_rhythm_output = self.bass_rhythm_output(output2)
+        # tensile_output = self.tensile_output(output2)
+        # diameter_output = self.diameter_output(output2)
+        # result = [output2, melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
+        #             tensile_output, diameter_output
+        #             ]
+        result = [output2]
         return result
 
     def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
@@ -389,6 +390,26 @@ def manipuate_latent_space(piano_roll, vector_up_t, vector_high_d, vector_up_dow
     # z = torch.tensor( [item.cpu().detach().numpy() for item in z] )
     z, vq_loss = vae.vq_layer(encoding)
     reconstruction = vae.decode_(z)
+    reconstruction = torch.tensor( [item.cpu().detach().numpy() for item in reconstruction] )
+    reconstruction = torch.squeeze(reconstruction, dim = 1)
+    reconstruction = reconstruction.to('cuda')
+
+    tensile_output_function = nn.Linear(rnn_dim, tension_output_dim).to('cuda')
+    diameter_output_function = nn.Linear(rnn_dim, tension_output_dim).to('cuda')
+    melody_rhythm_output_function = nn.Linear(rnn_dim, melody_note_start_dim).to('cuda')
+    melody_pitch_output_function = nn.Linear(rnn_dim, melody_output_dim).to('cuda')
+    bass_rhythm_output_function = nn.Linear(rnn_dim, bass_note_start_dim).to('cuda')
+    bass_pitch_output_function = nn.Linear(rnn_dim, bass_output_dim).to('cuda')
+
+    melody_pitch_output = melody_pitch_output_function(reconstruction)
+    melody_rhythm_output = melody_rhythm_output_function(reconstruction)
+    bass_pitch_output = bass_pitch_output_function(reconstruction)
+    bass_rhythm_output = bass_rhythm_output_function(reconstruction)
+    tensile_output = tensile_output_function(reconstruction)
+    diameter_output = diameter_output_function(reconstruction)
+    reconstruction = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
+                tensile_output, diameter_output
+                ]
 
     # TODO
     tensile_reconstruction = np.squeeze(reconstruction[-2]) # (1, 64, 1) (1, 64, 256)
@@ -412,7 +433,22 @@ def manipuate_latent_space(piano_roll, vector_up_t, vector_high_d, vector_up_dow
     changed_z = changed_z.to('cuda:0')
     changed_reconstruction = vae.decode_(changed_z)
 
-    changed_reconstruction = [item.cpu().detach().numpy() for item in changed_reconstruction] 
+    changed_reconstruction = torch.tensor([item.cpu().detach().numpy() for item in changed_reconstruction])
+    changed_reconstruction = torch.squeeze(changed_reconstruction, dim = 1)
+    changed_reconstruction = changed_reconstruction.to('cuda')
+    
+    melody_pitch_output = melody_pitch_output_function(changed_reconstruction)
+    melody_rhythm_output = melody_rhythm_output_function(changed_reconstruction)
+    bass_pitch_output = bass_pitch_output_function(changed_reconstruction)
+    bass_rhythm_output = bass_rhythm_output_function(changed_reconstruction)
+    tensile_output = tensile_output_function(changed_reconstruction)
+    diameter_output = diameter_output_function(changed_reconstruction)
+    changed_reconstruction = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
+                tensile_output, diameter_output
+                ]
+
+
+    changed_reconstruction = [item.cpu().detach().numpy() for item in changed_reconstruction]
     changed_recon_result = result_sampling(np.concatenate(list(changed_reconstruction), axis=-1))[0]
     # changed_recon_result = changed_reconstruction.detach().cpu().numpy()
 

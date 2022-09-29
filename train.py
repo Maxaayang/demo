@@ -20,13 +20,13 @@ trainning_data = SequenceMIDI(
     BASE_PATH, sequence_lenth, max_file_num)
 print(f"Read {len(trainning_data)} sequences.")
 loader = DataLoader(trainning_data, batch_size=batch_size)
-print("loader length: ", len(loader))
-print("loader ", loader)
+# print("loader length: ", len(loader))
+# print("loader ", loader)
 
-for X, y in loader:
-    print(f"X: {X.shape} {X.dtype}")
-    print(f"y: {y}")
-    break
+# for X, y in loader:
+#     print(f"X: {X.shape} {X.dtype}")
+#     print(f"y: {y}")
+#     break
 
 model = VQVAE(in_channels, embedding_dim, num_embeddings).to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)

@@ -8,7 +8,7 @@
 # python unmix/unmix/train.py --hps=vqvae --name=vqvae_drums_b4 --sr=44100 --sample_length=89 --bs=4 \
 # --audio_files_dir="../data/lmd/*.mid" --labels=False --train --aug_shift --aug_blend > tra.log
 
-python juke/train.py > juke.log
+python train.py > ./log/vqvae20000.log
 
 # https://www.cnblogs.com/Finley/p/6071463.html
 

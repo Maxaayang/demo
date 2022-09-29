@@ -1,3 +1,5 @@
+from email.header import decode_header
+from mimetypes import init
 import torch
 from base import BaseVAE
 from torch import nn
@@ -79,26 +81,36 @@ class VectorQuantizer(nn.Module):
         self.embedding_dim = embedding_dim
         self.num_embeddings = num_embeddings
         self.commitment_cost = beta
+        self.init = False
         
         # initialize embeddings
-        self.embeddings = nn.Embedding(self.num_embeddings, self.embedding_dim).cuda()
+        # self.embeddings = nn.Embedding(self.num_embeddings, self.embedding_dim).cuda()
+
+    def _tile(self, x):
+        d, ew = x.shape
+        if d < self.num_embeddings:
+            n_repeats = (self.num_embeddings + d - 1) // d
+            std = 0.01 / np.sqrt(ew)
+            x = x.repeat(n_repeats, 1)
+            x = x + torch.randn_like(x) * std
+        return x
+
+    def init_emb(self, x):
+        self.init = True
+        y = self._tile(x)
+        _k_rand = y[torch.randperm(y.shape[0])][:self.embedding_dim]
+        self.embeddings = _k_rand
         
     def forward(self, x):
         # [B, C, H, W] -> [B, H, W, C]
-        # print("x.shape ", x.shape)
-        
-        # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        x = torch.squeeze(x, dim=1)
 
-        # TODO 这里训练时要注释掉
-        # device = torch.device('cuda:0')
-        # x = x.to(device)
-        # x = x.squeeze(dim=1)
+        if not self.init:
+            self.init_emb(x)
 
-        # x = x.permute(0, 2, 3, 1).contiguous()
-        # print("x", x)
-        x = x.permute(0, 2, 1).contiguous()
+        # x = x.permute(0, 2, 1).contiguous()
         # [B, H, W, C] -> [BHW, C]
-        x = x[:, :96, :]
+        # x = x[:, :96, :]
         flat_x = x.reshape(-1, self.embedding_dim)
         # flat_x = flat_x.to(device)
         
@@ -107,38 +119,43 @@ class VectorQuantizer(nn.Module):
         quantized = self.quantize(x_l)
         quantized = quantized.view_as(x) # [B, H, W, C]
         
-        if not self.training:
-            quantized = quantized.permute(0, 3, 1, 2).contiguous()
-            return quantized
+        # if not self.training:
+        #     quantized = quantized.permute(0, 3, 1, 2).contiguous()
+        #     return quantized
         
         # embedding loss: move the embeddings towards the encoder's output
-        q_latent_loss = F.mse_loss(quantized, x.detach())
-        # commitment loss
-        e_latent_loss = F.mse_loss(x, quantized.detach())
-        loss = q_latent_loss + self.commitment_cost * e_latent_loss
+        # quantized_data = quantized.data
+        # x_data = x.data
+        # q_latent_loss = F.mse_loss(quantized, x.detach())
+        # # commitment loss
+        # e_latent_loss = F.mse_loss(x_data, quantized_data.detach())
+        # loss = q_latent_loss + self.commitment_cost * e_latent_loss
+        loss = torch.norm(quantized.detach() - x) ** 2 / np.prod(x.shape) * self.commitment_cost
 
         # Straight Through Estimator
         quantized = x + (quantized - x).detach()
         
         # quantized = quantized.permute(0, 3, 1, 2).contiguous()
-        quantized = quantized.permute(0, 2, 1).contiguous()
+        # quantized = quantized.permute(0, 2, 1).contiguous()
         # quantized = torch.squeeze(quantized)
         return quantized, loss
     
     def get_code_indices(self, flat_x):
         # compute L2 distance
         # print("self.embeddings.weight ", self.embeddings.weight)
-        distances = (
-            torch.sum(flat_x ** 2, dim=1, keepdim=True) +
-            torch.sum(self.embeddings.weight ** 2, dim=1) -
-            2. * torch.matmul(flat_x, self.embeddings.weight.t())
-        ) # [N, M]
-
         # distances = (
-        #     torch.sum(flat_x ** 2, dim=-1, keepdim=True) +
-        #     torch.sum(self.embeddings.weight ** 2, dim=0, keepdim=True) -
+        #     torch.sum(flat_x ** 2, dim=1, keepdim=True) +
+        #     torch.sum(self.embeddings.weight ** 2, dim=1) -
         #     2. * torch.matmul(flat_x, self.embeddings.weight.t())
         # ) # [N, M]
+
+        # TODO
+
+        distances = (
+            torch.sum(flat_x ** 2, dim=-1, keepdim=True) +
+            torch.sum(self.embeddings.t().to('cuda') ** 2, dim=0, keepdim=True) -
+            2. * torch.matmul(flat_x, self.embeddings.t().to('cuda'))
+        ) # [N, M]
 
         min_distance, x_l = torch.min(distances, dim=-1) # (min, min_indices)
         # encoding_indices = torch.argmin(distances, dim=1) # [N,]
@@ -146,6 +163,7 @@ class VectorQuantizer(nn.Module):
     
     def quantize(self, encoding_indices):
         """Returns embedding tensor for a batch of indices."""
+        # TODO
         x = F.embedding(encoding_indices, self.embeddings)
         return x
         # return self.embeddings(encoding_indices) 
@@ -187,12 +205,6 @@ class VQVAE(BaseVAE):
         self.relu = nn.LeakyReLU()
         self.dgru = nn.GRU(embedding_dim, rnn_dim)
         self.linear = nn.Linear(rnn_dim, rnn_dim)
-        self.tensile_output = nn.Linear(rnn_dim, tension_output_dim)
-        self.diameter_output = nn.Linear(rnn_dim, tension_output_dim)
-        self.melody_rhythm_output = nn.Linear(rnn_dim, melody_note_start_dim)
-        self.melody_pitch_output = nn.Linear(rnn_dim, melody_output_dim)
-        self.bass_rhythm_output = nn.Linear(rnn_dim, bass_note_start_dim)
-        self.bass_pitch_output = nn.Linear(rnn_dim, bass_output_dim)
 
         # modules = []
         # # if hidden_dims is None:
@@ -296,24 +308,26 @@ class VQVAE(BaseVAE):
         # z = torch.tensor(z)
         # z = torch.tensor( [item.cpu().detach().numpy() for item in z] ).to('cuda:0')
         # z = z.squeeze(dim=1)
-        # TODO 这里需要6个全连接层
         output1, states = self.dgru(z)
         output2, states1 = self.gru(output1)
-        melody_pitch_output = self.melody_pitch_output(output2)
-        melody_rhythm_output = self.melody_rhythm_output(output2)
-        bass_pitch_output = self.bass_pitch_output(output2)
-        bass_rhythm_output = self.bass_rhythm_output(output2)
-        tensile_output = self.tensile_output(output2)
-        diameter_output = self.diameter_output(output2)
-        result = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
-                    tensile_output, diameter_output
-                    ]
-        return result
+
+        return output2
 
     def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
         encoding = self.encode_(input)[0]
         quantized_inputs, vq_loss = self.vq_layer(encoding)
-        return [self.decode_(quantized_inputs), input, vq_loss]
+        decode_value = self.decode_(quantized_inputs)
+
+        x = input
+        if (decode_value.shape != x.shape):
+            # 这里把输入和输出的维度不一样处理了一下
+            decode_value = F.pad(input=decode_value, pad=(
+                0, x.shape[-1]-decode_value.shape[-1]), mode='constant', value=0)
+
+
+        recon_loss = torch.mean(torch.abs(decode_value - input))
+        loss = recon_loss + vq_loss
+        return [decode_value, input, loss]
 
     def loss_function(self,
                       *args,

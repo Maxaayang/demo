@@ -1,0 +1,264 @@
+Using cuda device
+Find 9524 files.
+Reading 5 files...
+f  ../../data/lmd/737342739894369c4b0b1d9208bdcd14.mid
+piano_roll shape:  (19, 64, 89)
+f  ../../data/lmd/b8a8c13dc41d320f6dd9bc3b53bd1a0b.mid
+not enough data for melody and bass track
+f  ../../data/lmd/77b404016fcd965d94e43eb28bf37c8c.mid
+piano_roll shape:  (16, 64, 89)
+f  ../../data/lmd/2cdf37f6465403fef4a658300b7e66da.mid
+piano_roll shape:  (21, 64, 89)
+f  ../../data/lmd/a16b9842d972d194243ee68192215f4c.mid
+piano_roll shape:  (21, 64, 89)
+note length:  155
+Read 154 sequences.
+note length:  155
+loader length:  3
+loader  <torch.utils.data.dataloader.DataLoader object at 0x1511b2dd4580>
+input_emb_width:  64
+width:  64
+output_emb_width:  96
+Start trainning...
+note length:  155
+Epoch 1
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.08023603757222493
+Epoch 2
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.07294068237145741
+Epoch 3
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.06686095148324966
+Epoch 4
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.06179501861333847
+Epoch 5
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.057684301088253655
+Epoch 6
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.05441778525710106
+Epoch 7
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.05164704596002897
+Epoch 8
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.04909235363205274
+Epoch 9
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.04672649006048838
+Epoch 10
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.04477255170543989
+Epoch 11
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.04316482444604238
+Epoch 12
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.04167921096086502
+Epoch 13
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.040414118518431984
+Epoch 14
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.03929543371001879
+Epoch 15
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.03823325658837954
+Epoch 16
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.03729740033547083
+Epoch 17
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.036382303883632026
+Epoch 18
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.035639770328998566
+Epoch 19
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.03501788154244423
+Epoch 20
+-----------------
+note length:  155
+note length:  155
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([64, 1, 89])
+Start trainning...
+X.shape torch.Size([26, 1, 89])
+Start trainning...
+note length:  155
+average loss = 0.03452881798148155
+Done!

@@ -47,8 +47,8 @@ DEBUG = True
 # note feature: pitch, step, duration
 batch_size = 64
 sequence_lenth = 1
-max_file_num = 5
-epochs = 20
+max_file_num = None
+epochs = 20000
 learning_rate = 0.005
 
 loss_weight = [0.1, 20.0, 1.0]
@@ -58,4 +58,4 @@ in_channels = 5
 num_embeddings = 2000
 embedding_dim = 96
 use_codebook_loss = True
-beta = 1
+beta = 0.02 # 1

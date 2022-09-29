@@ -1,6 +1,7 @@
 import pretty_midi
 import numpy as np
 import torch
+import torch.nn as nn
 from params import *
 import pickle
 import util
@@ -338,8 +339,29 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             z = torch.tensor( [item.cpu().detach().numpy() for item in z] )
             z_new = z + curr_factor * feature_vector
             z_new = z_new.to('cuda:0')  # (1, 64, 96)
+
+            tensile_output_function = nn.Linear(rnn_dim, tension_output_dim)
+            diameter_output_function = nn.Linear(rnn_dim, tension_output_dim)
+            melody_rhythm_output_function = nn.Linear(rnn_dim, melody_note_start_dim)
+            melody_pitch_output_function = nn.Linear(rnn_dim, melody_output_dim)
+            bass_rhythm_output_function = nn.Linear(rnn_dim, bass_note_start_dim)
+            bass_pitch_output_function = nn.Linear(rnn_dim, bass_output_dim)
+
+
             reconstruction = model.decode_(z.to('cuda'))    # mean 0.0004, 0.0284
             reconstruction_new = model.decode_(z_new)   # (1, 64, 1)
+            reconstruction_new = torch.tensor( [item.cpu().detach().numpy() for item in reconstruction_new] )
+            reconstruction_new = torch.squeeze(reconstruction_new, dim = 1)
+            melody_pitch_output = melody_pitch_output_function(reconstruction_new)
+            melody_rhythm_output = melody_rhythm_output_function(reconstruction_new)
+            bass_pitch_output = bass_pitch_output_function(reconstruction_new)
+            bass_rhythm_output = bass_rhythm_output_function(reconstruction_new)
+            tensile_output = tensile_output_function(reconstruction_new)
+            diameter_output = diameter_output_function(reconstruction_new)
+            reconstruction_new = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
+                        tensile_output, diameter_output
+                        ]
+
             # reconstruction_new = reconstruction_new.cpu().detach().numpy()
             # TODO 这里注释掉了
             # ss = np.concatenate(list(reconstruction_new), axis=-1)

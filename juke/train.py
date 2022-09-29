@@ -36,7 +36,7 @@ block_kwargs = dict(width=width, depth=depth, m_conv=m_conv, dilation_growth_rat
 model = VQVAE(input_shape, levels, downs_t, strides_t, emb_width, l_bins, mu, commit, \
               spectral, multispectral, multipliers, use_bottleneck, **block_kwargs)
 
-model.state_dict = torch.load("../model/juke_vae20.pth")
+# model.state_dict = torch.load("../model/juke_vae20.pth")
 optimizer = torch.optim.SGD(model.parameters(), lr)
 
 model = model.to(device)
