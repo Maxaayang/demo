@@ -96,7 +96,8 @@ class VectorQuantizer(nn.Module):
     def init_emb(self, x):
         self.init = True
         y = self._tile(x)
-        _k_rand = y[torch.randperm(y.shape[0])][:self.embedding_dim]
+        # _k_rand = y[torch.randperm(y.shape[0])][:self.embedding_dim]
+        _k_rand = y[torch.randperm(y.shape[0])][:]
         self.embeddings = _k_rand
        
     def forward(self, x):
@@ -109,12 +110,15 @@ class VectorQuantizer(nn.Module):
         device = torch.device('cuda:0')
         x = x.to(device)
         x = x.squeeze(dim=1)
+        x = x.squeeze(dim=0)
 
         # x = x.permute(0, 2, 3, 1).contiguous()
         # print("x", x)
-        x = x.permute(0, 2, 1).contiguous()
+        # x = x.permute(0, 2, 1).contiguous()
         # [B, H, W, C] -> [BHW, C]
-        x = x[:, :96, :]
+        # x = x[:, :96, :]
+        if not self.init:
+            self.init_emb(x)
         flat_x = x.reshape(-1, self.embedding_dim)
         # flat_x = flat_x.to(device)
         
@@ -141,7 +145,7 @@ class VectorQuantizer(nn.Module):
         quantized = x + (quantized - x).detach()
         
         # quantized = quantized.permute(0, 3, 1, 2).contiguous()
-        quantized = quantized.permute(0, 2, 1).contiguous()
+        # quantized = quantized.permute(0, 2, 1).contiguous()
         # quantized = torch.squeeze(quantized)
         return quantized, loss
     

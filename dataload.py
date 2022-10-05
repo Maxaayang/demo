@@ -6,6 +6,7 @@ from tqdm import tqdm
 from utils import GetNoteSequence
 from preprocess_midi import *
 from util import *
+import pickle
 
 
 class SequenceMIDI(Dataset):
@@ -33,26 +34,33 @@ class SequenceMIDI(Dataset):
             if preprocess_midi(f) == None:
                 continue
             piano_roll, bar_indices, pm_old = preprocess_midi(f)
+            # (16, 64, 89)
             if piano_roll.shape == (0,):
                 continue
             print("piano_roll shape: ", piano_roll.shape)
+            # (1024, 89)
             piano_roll_new = np.reshape(piano_roll,(-1,piano_roll.shape[-1]))
             if notes is not None:
                 notes = np.append(notes, piano_roll_new, axis=0)
             else:
                 notes = piano_roll_new
-            # pm_new = util.roll_to_pretty_midi(piano_roll_new,pm_old)
+            pm_new = util.roll_to_pretty_midi(piano_roll_new,pm_old)
 
-        self.seq_len = seq_len
+        # self.seq_len = seq_len
+        # self.notes = pickle.load(open('./model/notes', 'rb'))
+
+        # 有声音的, 空的, start, 有声音的, 空的, start, 第一个有声音的是 0~72, 第二个是压缩到了 12., melody, bass
         self.notes = np.array(notes, dtype=np.float32)
+        # pickle.dump()
 
     def __len__(self):
-        print("note length: ", len(str(self.notes)))
+        # print("note length: ", len(str(self.notes)))
         # print("__len__ ", len(str(self.notes))-self.seq_len)
         return len(str(self.notes))-self.seq_len
 
     def __getitem__(self, idx) -> (np.ndarray, dict):
         label_note = self.notes[idx+self.seq_len]
+        # TODO 这里的label需要修改
         label = {
             'pitch': (label_note[0]*128).astype(np.int64), 'step': label_note[1], 'duration': label_note[2]}
         return self.notes[idx:idx+self.seq_len], label

@@ -48,14 +48,14 @@ DEBUG = True
 batch_size = 64
 sequence_lenth = 1
 max_file_num = None
-epochs = 20000
+epochs = 200
 learning_rate = 0.005
 
 loss_weight = [0.1, 20.0, 1.0]
 
 # VectorQuantizer
 in_channels = 5
-num_embeddings = 2000
+num_embeddings = 10
 embedding_dim = 96
 use_codebook_loss = True
 beta = 0.02 # 1

@@ -1,1 +1,1 @@
-python train.py > ../log/juke20000.log
+python train.py > ../log/juke100000.log

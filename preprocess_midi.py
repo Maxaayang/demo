@@ -14,7 +14,7 @@ diameter_high_feature_vector = pickle.load(open('model/diameter_high_feature_vec
 
 tensile_up_down_feature_vector = pickle.load(open('model/tensile_up_down_feature_vector','rb'))
 
-# 敲击
+# 节拍
 def beat_time(pm, beat_division=4):
     beats = pm.get_beats()
 
@@ -58,7 +58,7 @@ def find_active_range(rolls, down_beat_indices):
     two_track_filled_bar = np.count_nonzero(track_filled[:2,:], axis=0) == 2
     filled_indices = []
 
-    # 如果某个间隔中所有的音符都有声音, 那么就将这个间隔记录下来
+    # 如果某个节拍间隔中所有的音符都有声音, 那么就将这个间隔记录下来
     for i in range(0,len(two_track_filled_bar)-interval+1,SLIDING_WINDOW):
         if np.sum(two_track_filled_bar[i:i+interval]) == interval:
             filled_indices.append((i,i+interval))
@@ -75,16 +75,18 @@ def stack_data(rolls):
     # 把声音从128压缩到12, 并把bass_empty_roll表示为1, 如果是新开始的note, 则在bass_start_roll_new中表示为1, 
     # 并将空白的时间找出来, 在bass_empty_roll表示为1
     for step in range(bass_roll.shape[1]):
-        # 寻找那个时间的pitch是不为零的, 即是发声的, 这个想当于从128压缩到了12
+        # 寻找哪个节拍的pitch是不为零的, 即是发声的, 这个想当于从128压缩到了12
         pitch = np.where(bass_roll[:, step] != 0)[0] % 12
         original_pitch = np.where(bass_roll[:, step] != 0)[0]
 
+        # 之前第一个是1, 后边是2, 现在 new_bass_roll 全标为了1
         if len(pitch) > 0:
             for i in pitch:
                 new_pitch = i
                 new_bass_roll[new_pitch, step] = 1
 
             # a note start
+            # 在原来的开始的节拍位置, 将 bass_start_roll_new 的所有 pitch 全标为 1
             if bass_roll[original_pitch, step] == 1:    # 1表示的是开始的时间
                 bass_start_roll_new[:, step] = 1
         else:
@@ -102,7 +104,7 @@ def stack_data(rolls):
 
             original_pitch = pitch[0]
             new_pitch = pitch[0]
-            shifted_pitch = new_pitch - 24
+            shifted_pitch = new_pitch - 24  # 将 pitch 降低 24
 
             if 0 <= shifted_pitch <= 72:
                 new_melody_roll[shifted_pitch, step] = 1
@@ -113,12 +115,14 @@ def stack_data(rolls):
                     melody_start_roll_new[:,step] = 1
 
         else:
+            # 解当前节拍所在的 melody_empty_roll 全部设置为 1
             melody_empty_roll[:, step] = 1
     # 这个是按照列来拼起来了
     concatenated_roll = np.concatenate([new_melody_roll,melody_empty_roll,melody_start_roll_new,
                                         new_bass_roll,bass_empty_roll,bass_start_roll_new])
     return concatenated_roll.transpose()    # 把行和列换一下, 相当于方阵的转置
 
+# 新的音乐(第0维是节拍), 所有音符都有声音的节拍间隔, 重节拍在所有节拍中的位置
 def prepare_one_x(roll_concat,filled_indices,down_beat_indices):
 
     rolls = []
@@ -146,6 +150,7 @@ def prepare_one_x(roll_concat,filled_indices,down_beat_indices):
     return rolls, filled_indices
 
 
+# times: 抽样后的节拍
 def get_roll_with_continue(track_num, track,times):
     if track.notes == []:
         return np.array([[]] * 128)
@@ -161,23 +166,25 @@ def get_roll_with_continue(track_num, track,times):
     # notes, 将音轨提出来, 并取所有音符
     for note in track.notes:
 
-        # time_step_start, 在敲击中比note开始的早的最后一个位置
+        # time_step_start, 在节拍中比note开始的早的最后一个位置
         time_step_start = np.where(note.start >= times)[0][-1]
 
-        # time_step_stop, 在敲击中比note结束的晚的第一个位置
+        # time_step_stop, 在节拍中比note结束的晚的第一个位置
         if note.end > times[-1]:
             time_step_stop = len(times) - 1
         else:
             time_step_stop = np.where(note.end <= times)[0][0]
 
         # snap note to the grid
-        # snap start time step, 提前开始了多少, 如果大于阈值的话, 就将times中的位置后移一位
+        # snap start time step
+        # 如果在第一个节拍中所占的时间不够一半的话, 就将times后移一位
         if time_step_stop > time_step_start:
             start_ratio = (times[time_step_start+1] - note.start) / (times[time_step_start+1] - times[time_step_start])
             if start_ratio < snap_ratio:
                 if time_step_stop - time_step_start > 1:
                     time_step_start += 1
-        # snap end time step, 提前结束的多少, 如果大于阈值的话, 就将times中的位置前移一位
+        # snap end time step
+        # 如果在最后一个节拍中所占的时间不够一半的话, 就将times前移一位
             end_ratio = (note.end - times[time_step_stop-1]) / (times[time_step_stop] - times[time_step_stop-1])
             if end_ratio < snap_ratio:
                 if time_step_stop - time_step_start > 1:
@@ -188,14 +195,14 @@ def get_roll_with_continue(track_num, track,times):
             # 如果比前一个note提前开始了, 则跳过
             if previous_start_step > time_step_start:
                 continue
-            # 如果与前一个音符同时开始以及结束, 则跳过
+            # 如果与前一个音符同时开始并且同时结束, 则跳过
             if previous_end_step == time_step_stop and previous_start_step == time_step_start:
                 continue
-            # pitch 音高, 将当前音符开始的时间标为1, 开始时间之后的全部标为2
+            # pitch 音高, 将当前音符开始的节拍标为1, 开始时间之后结束之前节拍的全部标为2
             piano_roll[note.pitch, time_step_start] = 1
             piano_roll[note.pitch, time_step_start + 1:time_step_stop] = 2
 
-            # 如果当前note开始时, 前一个note还没有结束, 就把前一个note的音高从当前note开始的时间清零
+            # 如果当前note在前一个note结束之前开始了, 就把前一个note的音高从当前note开始的节拍之后清零
             if time_step_start < previous_end_step:
                 piano_roll[previous_pitch, time_step_start:] = 0
             previous_pitch = note.pitch
@@ -210,6 +217,7 @@ def get_roll_with_continue(track_num, track,times):
                 continue
             if time_step_start < previous_end_step:
                 piano_roll[previous_pitch, time_step_start:] = 0
+            # 与上边不同的是, 这里先进行了清零
             piano_roll[note.pitch, time_step_start] = 1
             piano_roll[note.pitch, time_step_start + 1:time_step_stop] = 2
 
@@ -247,20 +255,22 @@ def preprocess_midi(midi_file):
         return
 
     # 1341, 84
-    # 抽样, 敲击变为之前的四倍, 重击在所有敲击中的位置
+    # 将节拍抽样为之前的四分之一, 并返回重拍在抽样后的节拍中的位置
     sixteenth_time, down_beat_indices = beat_time(pm, beat_division=int(SAMPLES_PER_BAR / 4))
     rolls = get_piano_roll(pm, sixteenth_time)
 
     melody_roll = rolls[0]
     bass_roll = rolls[1]
 
-    # 寻找所有音符都有声音的间隔
+    # 寻找所有音符都有声音的重节拍间隔
     # [(12, 16), (16, 20), (20, 24), (24, 28), (36, 40), (40, 44), (44, 48), (68, 72)]
     filled_indices = find_active_range([melody_roll, bass_roll], down_beat_indices)
 
     if filled_indices is None:
         print('not enough data for melody and bass track')
         return None
+    
+    # 有声音的, 空的, start, 有声音的, 空的, start, 第一个有声音的是 0~72, 第二个是压缩到了 12
     roll_concat = stack_data([melody_roll, bass_roll])
 
     x,indices = prepare_one_x(roll_concat, filled_indices, down_beat_indices)
@@ -329,8 +339,8 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             encode_value = model.encode_(input_roll)
             # encode_value = torch.tensor(encode_value)
             encode_value = torch.tensor( [item.cpu().detach().numpy() for item in encode_value] ) # (1, 1, 64, 96)
-            encode_value = torch.squeeze(encode_value, dim = 1) # (1, 64, 96)
-            z, vq_loss = model.vq_layer(encode_value)   # (1, 64, 96)
+            encode_value = torch.squeeze(encode_value, dim = 1).to('cuda') # (1, 64, 96)
+            x_l, z, vq_loss = model.vq_layer(encode_value)   # (1, 64, 96)
             curr_factor = direction * (np.random.uniform(-1, 1) + factor)
             print(f'factor is {curr_factor}')
             # print("z.shape", z.shape)
@@ -348,8 +358,9 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             bass_pitch_output_function = nn.Linear(rnn_dim, bass_output_dim)
 
 
-            reconstruction = model.decode_(z.to('cuda'))    # mean 0.0004, 0.0284
-            reconstruction_new = model.decode_(z_new)   # (1, 64, 1)
+            reconstruction = model.decode_(torch.unsqueeze(z, dim = 0).to('cuda'))    # mean 0.0004, 0.0284
+            reconstruction_new = model.decode_(torch.unsqueeze(z_new, dim = 0))   # (1, 64, 1)
+            reconstruction_new = torch.unsqueeze(reconstruction_new, dim=0)
             reconstruction_new = torch.tensor( [item.cpu().detach().numpy() for item in reconstruction_new] )
             reconstruction_new = torch.squeeze(reconstruction_new, dim = 1)
             melody_pitch_output = melody_pitch_output_function(reconstruction_new)

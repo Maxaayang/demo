@@ -33,10 +33,13 @@ optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 print(model)
 
 print("Start trainning...")
+best_loss = 0.0
+last_sum_loss = 0.0
 size = len(loader.dataset)
+map = {}
 for t in range(epochs):
     model.train()
-    avg_loss = 0.0
+    sum_loss = 0.0
     print(f"Epoch {t+1}\n-----------------")
     for batch,(X, y) in enumerate(tqdm(loader)):
         X = torch.tensor(X)
@@ -44,18 +47,33 @@ for t in range(epochs):
         for feat in y.keys():
             y[feat]=y[feat].to(device)
         # print("train X ", X)
-        print("X.shape", X.shape)
-        pred, input, loss = model(X)
-        avg_loss += loss.item()
+        # print("X.shape", X.shape)
+        index, pred, input, loss = model(X)
+        sum_loss += loss.item()
+        # index = torch.tensor( [item.cpu().detach().numpy() for item in index] )
+        index = index.cpu().numpy()
+        for i in range(len(index)):
+            if (map.__contains__(index[i])):
+                map[index[i]] += 1
+            else:
+                map[index[i]] = 1
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     
-    avg_loss /= len(loader)
-    print(f"average loss = {avg_loss}")
+    # avg_loss /= len(loader)
+        # avg_loss /= len(loader)
+    if (sum_loss < last_sum_loss):
+        print(f"best loss = {best_loss}, last loss = {last_sum_loss}, loss = {sum_loss}, diff loss = {best_loss - sum_loss}, per = {((best_loss - sum_loss) / sum_loss * 100)}")
+        last_sum_loss = sum_loss
+    else:
+        best_loss = sum_loss
+        last_sum_loss = sum_loss
+        print(f"loss = {sum_loss}")
     if (t+1) % epochs == 0:
         torch.save(model.state_dict, "./model/model_vae%d.pth" % (t+1))
+print(sorted(map.items(),key=lambda s:s[1]))
 print("Done!")
 
 # torch.save(model.state_dict(), SAVE_MODEL_NAME)

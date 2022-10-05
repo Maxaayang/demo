@@ -248,4 +248,4 @@ class VQVAE(nn.Module):
             metrics[key] = val.detach()
 
         # print("metrics ", metrics)
-        return x_out, loss, metrics
+        return zs, x_out, loss, metrics

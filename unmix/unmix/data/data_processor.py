@@ -55,7 +55,7 @@ class OffsetDataset(Dataset):
             piano_roll, bar_indices, pm_old = preprocess_midi(f)
             if piano_roll.shape == (0,):
                 continue
-            print("piano_roll shape: ", piano_roll.shape)
+            # print("piano_roll shape: ", piano_roll.shape)
             piano_roll_new = np.reshape(piano_roll,(-1,piano_roll.shape[-1]))
             if notes is not None:
                 notes = np.append(notes, piano_roll_new, axis=0)
@@ -67,7 +67,7 @@ class OffsetDataset(Dataset):
         self.notes = np.array(notes, dtype=np.float32)
 
     def __len__(self):
-        print("note length: ", len(str(self.notes)))
+        # print("note length: ", len(str(self.notes)))
         # print("__len__ ", len(str(self.notes))-self.seq_len)
         return len(str(self.notes))
 

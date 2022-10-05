@@ -3,7 +3,7 @@ levels = 1
 downs_t = (3, 2, 2)
 strides_t = (2, 2, 2)
 emb_width = 96
-l_bins = 2048
+l_bins = 256
 mu = 0.99
 commit = 0.02
 spectral = 0.0
@@ -18,7 +18,7 @@ dilation_cycle = None
 reverse_decoder_dilation = True
 
 lr = 0.05
-epochs = 20000
+epochs = 100000
 max_file_num = None
 BASE_PATH = '../../data/lmd/**.mid'
 sequence_lenth = 1

@@ -98,12 +98,12 @@ class VectorQuantizer(nn.Module):
     def init_emb(self, x):
         self.init = True
         y = self._tile(x)
-        _k_rand = y[torch.randperm(y.shape[0])][:self.embedding_dim]
+        _k_rand = y[torch.randperm(y.shape[0])][:]
         self.embeddings = _k_rand
         
     def forward(self, x):
         # [B, C, H, W] -> [B, H, W, C]
-        x = torch.squeeze(x, dim=1)
+        x = torch.squeeze(x, dim=0)
 
         if not self.init:
             self.init_emb(x)
@@ -138,7 +138,7 @@ class VectorQuantizer(nn.Module):
         # quantized = quantized.permute(0, 3, 1, 2).contiguous()
         # quantized = quantized.permute(0, 2, 1).contiguous()
         # quantized = torch.squeeze(quantized)
-        return quantized, loss
+        return x_l, quantized, loss
     
     def get_code_indices(self, flat_x):
         # compute L2 distance
@@ -315,7 +315,8 @@ class VQVAE(BaseVAE):
 
     def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
         encoding = self.encode_(input)[0]
-        quantized_inputs, vq_loss = self.vq_layer(encoding)
+        encoding = torch.squeeze(encoding, dim = 1)
+        index, quantized_inputs, vq_loss = self.vq_layer(encoding)
         decode_value = self.decode_(quantized_inputs)
 
         x = input
@@ -327,7 +328,7 @@ class VQVAE(BaseVAE):
 
         recon_loss = torch.mean(torch.abs(decode_value - input))
         loss = recon_loss + vq_loss
-        return [decode_value, input, loss]
+        return [index, decode_value, input, loss]
 
     def loss_function(self,
                       *args,
@@ -384,8 +385,8 @@ def draw_two_figure(tensile_strain, diameter, first_name='tensile strain',
     if tensile_strain.shape[0] == 64:
         fig = plt.figure(figsize=(5, 5))
         ax = fig.add_subplot(1, 1, 1)
-        tensile_strain = tensile_strain.detach().cpu().numpy()
-        diameter = diameter.detach().cpu().numpy()
+        # tensile_strain = tensile_strain
+        # diameter = diameter.detach().cpu().numpy()
         ax.plot(tensile_strain, label=first_name)
         ax.plot(diameter, label=second_name)
         ax.legend()
@@ -411,14 +412,37 @@ def manipuate_latent_space(piano_roll, vector_up_t, vector_high_d, vector_up_dow
     else:
         z = np.random.normal(size=(1,z_dim))
 
+    z = torch.tensor( [item.cpu().detach().numpy() for item in z] )
+    z = torch.squeeze(z, dim = 0).to('cuda')
     reconstruction = vae.decode_(z)
+    reconstruction = reconstruction.to('cuda')
+
+    tensile_output_function = nn.Linear(rnn_dim, tension_output_dim).to('cuda')
+    diameter_output_function = nn.Linear(rnn_dim, tension_output_dim).to('cuda')
+    melody_rhythm_output_function = nn.Linear(rnn_dim, melody_note_start_dim).to('cuda')
+    melody_pitch_output_function = nn.Linear(rnn_dim, melody_output_dim).to('cuda')
+    bass_rhythm_output_function = nn.Linear(rnn_dim, bass_note_start_dim).to('cuda')
+    bass_pitch_output_function = nn.Linear(rnn_dim, bass_output_dim).to('cuda')
+
+    melody_pitch_output = melody_pitch_output_function(reconstruction)
+    melody_rhythm_output = melody_rhythm_output_function(reconstruction)
+    bass_pitch_output = bass_pitch_output_function(reconstruction)
+    bass_rhythm_output = bass_rhythm_output_function(reconstruction)
+    tensile_output = tensile_output_function(reconstruction)
+    diameter_output = diameter_output_function(reconstruction)
+    reconstruction = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
+                tensile_output, diameter_output
+                ]
 
     # TODO
     tensile_reconstruction = np.squeeze(reconstruction[-2])
+    tensile_reconstruction = tensile_reconstruction.cpu().detach()
     diameter_reconstruction = np.squeeze(reconstruction[-1])
+    diameter_reconstruction = diameter_reconstruction.cpu().detach()
 
     # recon_result = result_sampling(np.concatenate(list(reconstruction), axis=-1))[0]
     changed_z = z
+    changed_z = changed_z.to('cpu')
     if change_t:
         changed_z += t_up_factor * vector_up_t
 
@@ -429,8 +453,24 @@ def manipuate_latent_space(piano_roll, vector_up_t, vector_high_d, vector_up_dow
     if change_t_up_down:
         changed_z += t_up_down_factor * vector_up_down_t
 
+    changed_z = changed_z.to('cuda:0')
     changed_reconstruction = vae.decode_(changed_z)
 
+    changed_reconstruction = torch.tensor([item.cpu().detach().numpy() for item in changed_reconstruction])
+    changed_reconstruction = torch.squeeze(changed_reconstruction, dim = 1)
+    changed_reconstruction = changed_reconstruction.to('cuda')
+    
+    melody_pitch_output = melody_pitch_output_function(changed_reconstruction)
+    melody_rhythm_output = melody_rhythm_output_function(changed_reconstruction)
+    bass_pitch_output = bass_pitch_output_function(changed_reconstruction)
+    bass_rhythm_output = bass_rhythm_output_function(changed_reconstruction)
+    tensile_output = tensile_output_function(changed_reconstruction)
+    diameter_output = diameter_output_function(changed_reconstruction)
+    changed_reconstruction = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
+                tensile_output, diameter_output
+                ]
+
+    changed_reconstruction = [item.cpu().detach().numpy() for item in changed_reconstruction]
     changed_recon_result = result_sampling(np.concatenate(list(changed_reconstruction), axis=-1))[0]
     # changed_recon_result = changed_reconstruction.detach().cpu().numpy()
 

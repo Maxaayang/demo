@@ -14,12 +14,12 @@ print(f"Using {device} device")
 def train(model, X):
     model.train()
 
-    print("Start trainning...")
+    # print("Start trainning...")
     model.train()
     X = torch.tensor(X)
     X= X.to(device)
-    x_out, loss, _metrics = model(X)
-    return loss, _metrics
+    index, x_out, loss, _metrics = model(X)
+    return index, loss, _metrics
 
 
 trainning_data = SequenceMIDI(
@@ -41,28 +41,46 @@ optimizer = torch.optim.SGD(model.parameters(), lr)
 
 model = model.to(device)
 
-print("Start trainning...")
+# print("Start trainning...")
 size = len(loader.dataset)
+last_sum_loss = 0.0
+best_loss = 0.0
+map = {}
 for epoch in range(epochs):
     model.train()
-    avg_loss = 0.0
+    sum_loss = 0.0
     print(f"Epoch {epoch+1}\n-----------------")
     for batch,(X, y) in enumerate(tqdm(loader)):
         X = torch.tensor(X)
         X= X.to(device)
         for feat in y.keys():
             y[feat]=y[feat].to(device)
-        print("X.shape", X.shape)
+        # print("X.shape", X.shape)
         # pred, input, loss = model(X)
-        loss, _metrics = train(model, X)
-        avg_loss += loss.item()
+        index, loss, _metrics = train(model, X)
+        sum_loss += loss.item()
+        index = index[0].cpu().numpy()
+        for i in range(len(index)):
+            if (map.__contains__(index[i])):
+                map[index[i]] += 1
+            else:
+                map[index[i]] = 1
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     
-    avg_loss /= len(loader)
-    print(f"average loss = {avg_loss}")
+    # avg_loss /= len(loader)
+    if (sum_loss < last_sum_loss):
+        print(f"best loss = {best_loss}, last loss = {last_sum_loss}, loss = {sum_loss}, diff loss = {best_loss - sum_loss}, per = {(best_loss - sum_loss) / sum_loss * 100}")
+        last_sum_loss = sum_loss
+    else:
+        best_loss = sum_loss
+        last_sum_loss = sum_loss
+        print(f"loss = {sum_loss}")
+    # print(f"average loss = {sum_loss / len(loader)}")
     if (epoch+1) % epochs == 0:
         torch.save(model.state_dict, "../model/juke_vae%d.pth" % (epoch+1))
 print("Done!")
+print(sorted(map.items(),key=lambda s:s[1]))
+# print("map", map)
