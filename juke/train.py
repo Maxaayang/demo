@@ -52,7 +52,7 @@ for epoch in range(epochs):
     model.train()
     sum_loss = 0.0
     print(f"Epoch {epoch+1}\n-----------------")
-    for batch,(X, y) in enumerate(tqdm(size)):
+    for batch,i in enumerate(tqdm(range(size))):
         X = trainning_data.__getitem__(i)
         X = np.reshape(X, (-1, X.shape[-1]))
         X = torch.tensor(X)
