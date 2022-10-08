@@ -167,7 +167,8 @@ class BottleneckBlock(nn.Module):
         return x_d
 
     def forward(self, x, update_k=True):
-        N, width, T = x.shape
+        # N, width, T = x.shape
+        N, T = x.shape
 
         # Preprocess
         x, prenorm = self.preprocess(x)

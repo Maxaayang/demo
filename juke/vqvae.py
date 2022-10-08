@@ -203,7 +203,7 @@ class VQVAE(nn.Module):
                 x_out = F.pad(input=x_out, pad=(
                     0, x_in.shape[-1]-x_out.shape[-1]), mode='constant', value=0)
 
-            assert_shape(x_out, x_in.shape)
+            # assert_shape(x_out, x_in.shape)
             x_outs.append(x_out)
         #print("decoder output: ")
         # print(x_outs[0].shape)
@@ -215,6 +215,7 @@ class VQVAE(nn.Module):
         for level in reversed(range(self.levels)):
             x_out = self.postprocess(x_outs[level])
             x_out = x_out
+            x_out = x_out.squeeze(axis = 2)
             this_recons_loss = _loss_fn(loss_fn, x_target, x_out)
             metrics[f'recons_loss_l{level + 1}'] = this_recons_loss
             recons_loss += this_recons_loss
