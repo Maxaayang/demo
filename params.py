@@ -46,7 +46,7 @@ DEBUG = True
 
 # note feature: pitch, step, duration
 batch_size = 64
-sequence_lenth = 1
+sequence_lenth = []
 max_file_num = None
 epochs = 200
 learning_rate = 0.005

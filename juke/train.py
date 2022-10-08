@@ -7,6 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 from juke.dataload import SequenceMIDI
 from tqdm import tqdm
+import numpy as np
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using {device} device")
@@ -26,9 +27,9 @@ trainning_data = SequenceMIDI(
     BASE_PATH, sequence_lenth, max_file_num)
 
 print(f"Read {len(trainning_data)} sequences.")
-loader = DataLoader(trainning_data, batch_size=batch_size)
-print("loader length: ", len(loader))
-print("loader ", loader)
+# loader = DataLoader(trainning_data, batch_size=batch_size)
+# print("loader length: ", len(loader))
+# print("loader ", loader)
 
 block_kwargs = dict(width=width, depth=depth, m_conv=m_conv, dilation_growth_rate=dilation_growth_rate, \
      dilation_cycle=dilation_cycle, reverse_decoder_dilation=reverse_decoder_dilation)
@@ -42,7 +43,8 @@ optimizer = torch.optim.SGD(model.parameters(), lr)
 model = model.to(device)
 
 # print("Start trainning...")
-size = len(loader.dataset)
+# size = len(loader.dataset)
+size = trainning_data.seq_len.shape[0] - 1
 last_sum_loss = 0.0
 best_loss = 0.0
 map = {}
@@ -50,11 +52,14 @@ for epoch in range(epochs):
     model.train()
     sum_loss = 0.0
     print(f"Epoch {epoch+1}\n-----------------")
-    for batch,(X, y) in enumerate(tqdm(loader)):
+    for batch,(X, y) in enumerate(tqdm(size)):
+        X = trainning_data.__getitem__(i)
+        X = np.reshape(X, (-1, X.shape[-1]))
         X = torch.tensor(X)
+        optimizer.zero_grad()
         X= X.to(device)
-        for feat in y.keys():
-            y[feat]=y[feat].to(device)
+        # for feat in y.keys():
+        #     y[feat]=y[feat].to(device)
         # print("X.shape", X.shape)
         # pred, input, loss = model(X)
         index, loss, _metrics = train(model, X)
@@ -66,7 +71,6 @@ for epoch in range(epochs):
             else:
                 map[index[i]] = 1
 
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     
@@ -80,7 +84,7 @@ for epoch in range(epochs):
         print(f"loss = {sum_loss}")
     # print(f"average loss = {sum_loss / len(loader)}")
     if (epoch+1) % epochs == 0:
-        torch.save(model.state_dict, "../model/juke_vae%d.pth" % (epoch+1))
+        torch.save(model.state_dict, "../model/new_juke%d.pth" % (epoch+1))
 print("Done!")
 print(sorted(map.items(),key=lambda s:s[1]))
 # print("map", map)

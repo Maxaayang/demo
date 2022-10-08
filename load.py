@@ -11,4 +11,5 @@ import pickle
 
 trainning_data = SequenceMIDI(
     BASE_PATH, sequence_lenth, max_file_num)
-pickle.dump(trainning_data.notes, open('model/notes', 'wb'))
+pickle.dump(trainning_data.notes, open('../leave_notes', 'wb'))
+pickle.dump(trainning_data.seq_len, open('../seq_len', 'wb'))

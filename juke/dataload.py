@@ -46,20 +46,20 @@ class SequenceMIDI(Dataset):
         #         notes = piano_roll_new
             # pm_new = util.roll_to_pretty_midi(piano_roll_new,pm_old)
 
-        self.seq_len = seq_len
+        self.seq_len = pickle.load(open('../../seq_len', 'rb'))
         # self.notes = np.array(notes, dtype=np.float32)
-        self.notes = pickle.load(open('../model/notes', 'rb'))
+        self.notes = pickle.load(open('../../notes', 'rb'))
 
     def __len__(self):
         # print("note length: ", len(str(self.notes)))
         # print("__len__ ", len(str(self.notes))-self.seq_len)
-        return len(str(self.notes))-self.seq_len
+        return len(str(self.notes))
 
     def __getitem__(self, idx) -> (np.ndarray, dict):
-        label_note = self.notes[idx+self.seq_len]
-        label = {
-            'pitch': (label_note[0]*128).astype(np.int64), 'step': label_note[1], 'duration': label_note[2]}
-        return self.notes[idx:idx+self.seq_len], label
+        # label_note = self.notes[idx+self.seq_len]
+        # label = {
+        #     'pitch': (label_note[0]*128).astype(np.int64), 'step': label_note[1], 'duration': label_note[2]}
+        return self.notes[self.seq_len[idx]:self.seq_len[idx + 1]]
 
     def getendseq(self) -> np.ndarray:
         print("getendseq ", self.notes[-self.seq_len:])

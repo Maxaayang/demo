@@ -19,7 +19,7 @@ print(f"Using {device} device")
 trainning_data = SequenceMIDI(
     BASE_PATH, sequence_lenth, max_file_num)
 print(f"Read {len(trainning_data)} sequences.")
-loader = DataLoader(trainning_data, batch_size=batch_size)
+# loader = DataLoader(trainning_data, batch_size=batch_size)
 # print("loader length: ", len(loader))
 # print("loader ", loader)
 
@@ -35,17 +35,22 @@ print(model)
 print("Start trainning...")
 best_loss = 0.0
 last_sum_loss = 0.0
-size = len(loader.dataset)
+# size = len(loader.dataset)
+size = trainning_data.seq_len.shape[0] - 1
 map = {}
 for t in range(epochs):
     model.train()
     sum_loss = 0.0
     print(f"Epoch {t+1}\n-----------------")
-    for batch,(X, y) in enumerate(tqdm(loader)):
+    # for batch,(X, y) in enumerate(tqdm(loader)):
+    for batch, i in enumerate(tqdm(range(size))):
+        X = trainning_data.__getitem__(i)
+        X = np.reshape(X,(-1,X.shape[-1]))
         X = torch.tensor(X)
+        optimizer.zero_grad()
         X= X.to(device)
-        for feat in y.keys():
-            y[feat]=y[feat].to(device)
+        # for feat in y.keys():
+        #     y[feat]=y[feat].to(device)
         # print("train X ", X)
         # print("X.shape", X.shape)
         index, pred, input, loss = model(X)
@@ -58,7 +63,6 @@ for t in range(epochs):
             else:
                 map[index[i]] = 1
 
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     
@@ -72,7 +76,7 @@ for t in range(epochs):
         last_sum_loss = sum_loss
         print(f"loss = {sum_loss}")
     if (t+1) % epochs == 0:
-        torch.save(model.state_dict, "./model/model_vae%d.pth" % (t+1))
+        torch.save(model.state_dict, "./model/new_vae%d.pth" % (t+1))
 print(sorted(map.items(),key=lambda s:s[1]))
 print("Done!")
 

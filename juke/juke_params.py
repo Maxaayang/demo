@@ -18,7 +18,7 @@ dilation_cycle = None
 reverse_decoder_dilation = True
 
 lr = 0.05
-epochs = 100000
+epochs = 200
 max_file_num = None
 BASE_PATH = '../../data/lmd/**.mid'
 sequence_lenth = 1
