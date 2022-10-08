@@ -214,7 +214,6 @@ class VQVAE(nn.Module):
 
         for level in reversed(range(self.levels)):
             x_out = self.postprocess(x_outs[level])
-            x_out = x_out
             x_out = x_out.squeeze(axis = 2)
             this_recons_loss = _loss_fn(loss_fn, x_target, x_out)
             metrics[f'recons_loss_l{level + 1}'] = this_recons_loss
