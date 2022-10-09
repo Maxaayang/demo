@@ -9,7 +9,7 @@ from base import *
 from util import *
 from typing import List, Callable, Union, Any, TypeVar, Tuple
 import matplotlib.pyplot as plt
-# from torch import tensor as Tensor
+
 Tensor = TypeVar('torch.tensor')
 
 class VectorQuantizer1(nn.Module):
@@ -104,7 +104,7 @@ class VectorQuantizer(nn.Module):
     # TODO 这里除了问题, 编码之后应该是一维的
     def forward(self, x):
         # [B, C, H, W] -> [B, H, W, C]
-        x = torch.squeeze(x, dim=0)
+        # x = torch.squeeze(x, dim=0)
 
         if not self.init:
             self.init_emb(x)
@@ -184,7 +184,6 @@ class ResidualLayer(nn.Module):
     def forward(self, input: Tensor) -> Tensor:
         return input + self.resblock(input)
 
-
 class VQVAE(BaseVAE):
 
     def __init__(self,
@@ -216,11 +215,12 @@ class VQVAE(BaseVAE):
         :param input: (Tensor) Input tensor to encoder [N x C x H x W]
         :return: (Tensor) List of latent codes
         """
-        output1, states = self.egru(input1)
-        output2, states1 = self.gru(output1)
+        output1, states = self.egru(input1) # (1, 64, 96)
+        output2, states1 = self.gru(output1)    # (1, 64, 96)
         result = self.linear(output2)
 
-        return [result]
+        # return result[:, -1, :]
+        return result
 
     def decode_(self, z: Tensor) -> Tensor:
         """
@@ -234,12 +234,14 @@ class VQVAE(BaseVAE):
 
         return output2
 
-    def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
-        encoding = self.encode_(input)[0]
-        encoding = torch.squeeze(encoding, dim = 1)
-        index, quantized_inputs, vq_loss = self.vq_layer(encoding)
-        quantized_inputs = quantized_inputs.repeat(time_step)
-        decode_value = self.decode_(quantized_inputs)
+    def forward(self, input: Tensor, **kwargs) -> List[Tensor]: # (16, 64, 89)
+        encoding = self.encode_(input)[0]  # (16, 96)
+        # encoding = torch.squeeze(encoding, dim = 1)
+        # encoding = encoding.reshape(1, 96)
+        index, quantized_inputs, vq_loss = self.vq_layer(encoding)  # (16, 96)
+        # quantized_inputs = quantized_inputs.repeat(time_step)
+        # quantized_inputs = quantized_inputs.repeat(1, 64, 96)
+        decode_value = self.decode_(quantized_inputs)   # (16, 96)
 
         x = input
         if (decode_value.shape != x.shape):

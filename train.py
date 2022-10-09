@@ -68,6 +68,7 @@ for t in range(epochs):
     
     # avg_loss /= len(loader)
         # avg_loss /= len(loader)
+    sum_loss = sum_loss / size
     if (sum_loss < last_sum_loss):
         print(f"best loss = {best_loss}, last loss = {last_sum_loss}, loss = {sum_loss}, diff loss = {best_loss - sum_loss}, per = {((best_loss - sum_loss) / sum_loss * 100)}")
         last_sum_loss = sum_loss
@@ -76,7 +77,7 @@ for t in range(epochs):
         last_sum_loss = sum_loss
         print(f"loss = {sum_loss}")
     if (t+1) % epochs == 0:
-        torch.save(model.state_dict, "./model/new_vae%d.pth" % (t+1))
+        torch.save(model, "./model/new_vae%d.pth" % (t+1))
 # print(sorted(map.items(),key=lambda s:s[1]))
 print("Done!")
 

@@ -21,7 +21,8 @@ from tensorflow.keras.layers import Dense, \
     GRU, Input, Bidirectional, RepeatVector, \
     TimeDistributed, Lambda
 from tensorflow.keras import Model
-import tfpyth
+from tensorflow.python.keras import backend as K
+# import tfpyth
 
 # class GRUCell(nn.Module):
 #     """自定义GRUCell"""
@@ -72,17 +73,84 @@ trainning_data = SequenceMIDI(
 
 X = trainning_data.__getitem__(0)
 
-model = VQVAE(in_channels, embedding_dim, num_embeddings).to('cuda')
+# model = VQVAE(in_channels, embedding_dim, num_embeddings).to('cuda')
 
 # gru = GRUModel(16, 64, 89)
 
 # session = tf.Session()
-def gru():
+def gru1():
     encoder_input = Input(shape=(time_step, input_dim), name='encoder_input')
-    rnn1 = Bidirectional(GRU(rnn_dim, return_sequences=True), name='rnn1')(encoder_input)
+    rnn1 = Bidirectional(GRU(rnn_dim, return_sequences=True), name='rnn1')(encoder_input)   # (1, 64, 192)
+    rnn2 = Bidirectional(GRU(rnn_dim), name='rnn2')(rnn1)   # (1, 192)
+
+    z_mean = Dense(z_dim, name='z_mean')(rnn2)  # (1, 96)
+    z_log_var = Dense(z_dim, name='z_log_var')(rnn2)
+
+    def sampling(args):
+        z_mean, z_log_var = args
+        batch = K.shape(z_mean)[0]
+        dim = K.int_shape(z_mean)[1]
+        # by default, random_normal has mean=0 and std=1.0
+        epsilon = K.random_normal(shape=(batch, dim))
+        return z_mean + K.exp(0.5 * z_log_var) * epsilon
+
+    z = Lambda(sampling, output_shape=(z_dim,), name='z')([z_mean, z_log_var])
+
     enco = Model(encoder_input, rnn1, name='encoder')
-    # f = tfpyth.torch_from_tensorflow(session, )
+    return enco
 
-gru1 = gru()
+def gru2():
+    encoder_input = Input(shape=(64, 192), name='encoder_input')
+    # rnn1 = Bidirectional(GRU(rnn_dim, return_sequences=True), name='rnn1')(encoder_input)   # (1, 64, 192)
+    rnn2 = Bidirectional(GRU(rnn_dim), name='rnn2')(encoder_input)   # (1, 192)
 
-aa = gru.layers[1].predict
+    z_mean = Dense(z_dim, name='z_mean')(rnn2)  # (1, 96)
+    z_log_var = Dense(z_dim, name='z_log_var')(rnn2)
+
+    def sampling(args):
+        z_mean, z_log_var = args
+        batch = K.shape(z_mean)[0]
+        dim = K.int_shape(z_mean)[1]
+        # by default, random_normal has mean=0 and std=1.0
+        epsilon = K.random_normal(shape=(batch, dim))
+        return z_mean + K.exp(0.5 * z_log_var) * epsilon
+
+    z = Lambda(sampling, output_shape=(z_dim,), name='z')([z_mean, z_log_var])
+
+    enco = Model(encoder_input, z, name='encoder')
+    return enco
+
+def gru3():
+    # encoder_input = Input(shape=(96), name='encoder_input')
+    # rnn1 = Bidirectional(GRU(rnn_dim, return_sequences=True), name='rnn1')(encoder_input)   # (1, 64, 192)
+    decoder_latent_input = Input(shape=z_dim, name='z_sampling')
+    repeated_z = RepeatVector(time_step, name='repeated_z_tension')(decoder_latent_input)
+    rnn1_output = GRU(rnn_dim, name='decoder_rnn1', return_sequences=True)(repeated_z)
+
+    rnn2_output = GRU(rnn_dim, name='decoder_rnn2', return_sequences=True)(
+        rnn1_output)
+    rnn2 = Bidirectional(GRU(rnn_dim), name='rnn2')(repeated_z)   # (1, 192)
+
+    z_mean = Dense(z_dim, name='z_mean')(rnn2)  # (1, 96)
+    z_log_var = Dense(z_dim, name='z_log_var')(rnn2)
+
+    def sampling(args):
+        z_mean, z_log_var = args
+        batch = K.shape(z_mean)[0]
+        dim = K.int_shape(z_mean)[1]
+        # by default, random_normal has mean=0 and std=1.0
+        epsilon = K.random_normal(shape=(batch, dim))
+        return z_mean + K.exp(0.5 * z_log_var) * epsilon
+
+    z = Lambda(sampling, output_shape=(z_dim,), name='z')([z_mean, z_log_var])
+
+    enco = Model(decoder_latent_input, rnn2_output, name='encoder')
+    return enco
+
+gru11 = gru1()
+gru12 = gru2()
+gru13 = gru3()
+ss = X[:1, :, :]    # (1, 64, 89)
+aa = gru11(ss)
+bb = gru12(aa)
+cc = gru13(bb)

@@ -340,12 +340,11 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             # encode_value = torch.tensor(encode_value)
             encode_value = torch.tensor( [item.cpu().detach().numpy() for item in encode_value] ) # (1, 1, 64, 96)
             encode_value = torch.squeeze(encode_value, dim = 1).to('cuda') # (1, 64, 96)
-            x_l, z, vq_loss = model.vq_layer(encode_value)   # (1, 64, 96)
+            encode_value1 = encode_value[:, -1, :]
+            x_l, z, vq_loss = model.vq_layer(encode_value1)   # (1, 64, 96)
+            z = z.reshape(1, 96)
             curr_factor = direction * (np.random.uniform(-1, 1) + factor)
             print(f'factor is {curr_factor}')
-            # print("z.shape", z.shape)
-            # z = z.cpu()
-            # 这里之后得调试
             z = torch.tensor( [item.cpu().detach().numpy() for item in z] )
             z_new = z + curr_factor * feature_vector
             z_new = z_new.to('cuda:0')  # (1, 64, 96)
@@ -358,8 +357,11 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             bass_pitch_output_function = nn.Linear(rnn_dim, bass_output_dim)
 
 
-            reconstruction = model.decode_(torch.unsqueeze(z, dim = 0).to('cuda'))    # mean 0.0004, 0.0284
-            reconstruction_new = model.decode_(torch.unsqueeze(z_new, dim = 0))   # (1, 64, 1)
+            # reconstruction = model.decode_(torch.unsqueeze(z.repeat(1, 64, 1), dim = 0).to('cuda'))    # mean 0.0004, 0.0284
+            # reconstruction_new = model.decode_(torch.unsqueeze(z_new.repeat(1, 64, 1), dim = 0))   # (1, 64, 1)
+            reconstruction = model.decode_(z.repeat(1, 64, 1).to('cuda'))    # mean 0.0004, 0.0284
+            reconstruction_new = model.decode_(z_new.repeat(1, 64, 1))   # (1, 64, 1)
+            encode_value[0] = reconstruction_new
             reconstruction_new = torch.unsqueeze(reconstruction_new, dim=0)
             reconstruction_new = torch.tensor( [item.cpu().detach().numpy() for item in reconstruction_new] )
             reconstruction_new = torch.squeeze(reconstruction_new, dim = 1)

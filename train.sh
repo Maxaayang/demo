@@ -1,7 +1,7 @@
 # conda activate vqcpc
 # python train.py > tra.log
 
-python train.py > ./log/new_vqvae/vqvae200.log
+python train.py > ./log/new_vqvae/vqvae5.log
 
 # https://www.cnblogs.com/Finley/p/6071463.html
 
