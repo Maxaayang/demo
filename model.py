@@ -101,6 +101,7 @@ class VectorQuantizer(nn.Module):
         _k_rand = y[torch.randperm(y.shape[0])][:]
         self.embeddings = _k_rand
         
+    # TODO 这里除了问题, 编码之后应该是一维的
     def forward(self, x):
         # [B, C, H, W] -> [B, H, W, C]
         x = torch.squeeze(x, dim=0)
@@ -206,80 +207,7 @@ class VQVAE(BaseVAE):
         self.dgru = nn.GRU(embedding_dim, rnn_dim)
         self.linear = nn.Linear(rnn_dim, rnn_dim)
 
-        # modules = []
-        # # if hidden_dims is None:
-        # #     hidden_dims = [128, 256]
-
-        # # Build Encoder
-        # # for h_dim in hidden_dims:
-        # modules.append(
-        #     nn.Sequential(
-        #         nn.GRU(input_dim, rnn_dim),
-        #         # nn.LeakyReLU())
-        #     )
-        # )
-        #     # in_channels = h_dim
-
-        # modules.append(
-        #     nn.Sequential(
-        #         nn.GRU(rnn_dim, rnn_dim),
-        #         # nn.LeakyReLU())
-        #     )
-        # )
-
-        # for _ in range(6):
-        #     modules.append(ResidualLayer(in_channels, in_channels))
-        # modules.append(nn.LeakyReLU())
-
-        # modules.append(
-        #     nn.Sequential(
-        #         nn.GRU(rnn_dim, rnn_dim),
-        #         # nn.LeakyReLU())
-        #     )
-        # )
-
-        # self.encoder = nn.Sequential(*modules)
-
         self.vq_layer = VectorQuantizer()
-
-        # Build Decoder
-        # modules = []
-        # modules.append(
-        #     nn.Sequential(
-        #         nn.GRU(embedding_dim, rnn_dim),
-        #         # nn.LeakyReLU(),
-        #         nn.GRU(rnn_dim, rnn_dim),
-        #         # nn.LeakyReLU())
-        #     )
-        # )
-
-        # for _ in range(6):
-        #     modules.append(ResidualLayer(hidden_dims[-1], hidden_dims[-1]))
-
-        # modules.append(nn.LeakyReLU())
-
-        # hidden_dims.reverse()
-
-        # for i in range(len(hidden_dims) - 1):
-        # modules.append(
-        #     nn.Sequential(
-        #         nn.ConvTranspose2d(hidden_dims[i],
-        #                             hidden_dims[i + 1],
-        #                             kernel_size=4,
-        #                             stride=2,
-        #                             padding=1),
-        #         nn.LeakyReLU())
-        #     )
-
-        # modules.append(
-        #     nn.Sequential(
-        #         nn.ConvTranspose2d(hidden_dims[-1],
-        #                            out_channels=3,
-        #                            kernel_size=4,
-        #                            stride=2, padding=1),
-        #         nn.Tanh()))
-
-        # self.decoder = nn.Sequential(*modules)
 
     def encode_(self, input1: Tensor) -> List[Tensor]:
         """
@@ -301,13 +229,6 @@ class VQVAE(BaseVAE):
         :param z: (Tensor) [B x D x H x W]
         :return: (Tensor) [B x C x H x W]
         """
-
-        # result = self.decoder(z)
-        # print("z.shape", z.shape)
-        # TODO
-        # z = torch.tensor(z)
-        # z = torch.tensor( [item.cpu().detach().numpy() for item in z] ).to('cuda:0')
-        # z = z.squeeze(dim=1)
         output1, states = self.dgru(z)
         output2, states1 = self.gru(output1)
 
@@ -317,6 +238,7 @@ class VQVAE(BaseVAE):
         encoding = self.encode_(input)[0]
         encoding = torch.squeeze(encoding, dim = 1)
         index, quantized_inputs, vq_loss = self.vq_layer(encoding)
+        quantized_inputs = quantized_inputs.repeat(time_step)
         decode_value = self.decode_(quantized_inputs)
 
         x = input
@@ -327,7 +249,8 @@ class VQVAE(BaseVAE):
 
 
         recon_loss = torch.mean(torch.abs(decode_value - input))
-        loss = recon_loss + vq_loss
+        loss = vq_loss + recon_loss
+        print("vq_loss: ", vq_loss, " recon_loss: ", recon_loss)
         return [index, decode_value, input, loss]
 
     def loss_function(self,

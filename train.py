@@ -45,7 +45,7 @@ for t in range(epochs):
     # for batch,(X, y) in enumerate(tqdm(loader)):
     for batch, i in enumerate(tqdm(range(size))):
         X = trainning_data.__getitem__(i)
-        X = np.reshape(X,(-1,X.shape[-1]))
+        # X = np.reshape(X,(-1,X.shape[-1]))
         X = torch.tensor(X)
         optimizer.zero_grad()
         X= X.to(device)
@@ -77,7 +77,7 @@ for t in range(epochs):
         print(f"loss = {sum_loss}")
     if (t+1) % epochs == 0:
         torch.save(model.state_dict, "./model/new_vae%d.pth" % (t+1))
-print(sorted(map.items(),key=lambda s:s[1]))
+# print(sorted(map.items(),key=lambda s:s[1]))
 print("Done!")
 
 # torch.save(model.state_dict(), SAVE_MODEL_NAME)

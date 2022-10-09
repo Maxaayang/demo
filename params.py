@@ -48,7 +48,7 @@ DEBUG = True
 batch_size = 64
 sequence_lenth = []
 max_file_num = None
-epochs = 200
+epochs = 1
 learning_rate = 0.005
 
 loss_weight = [0.1, 20.0, 1.0]
