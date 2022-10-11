@@ -17,11 +17,13 @@ from model import VQVAE
 from tqdm import tqdm
 from util import *
 import tensorflow as tf
+from preprocess_midi import *
 from tensorflow.keras.layers import Dense, \
     GRU, Input, Bidirectional, RepeatVector, \
     TimeDistributed, Lambda
 from tensorflow.keras import Model
 from tensorflow.python.keras import backend as K
+import pickle
 # import tfpyth
 
 # class GRUCell(nn.Module):
@@ -68,10 +70,18 @@ from tensorflow.python.keras import backend as K
 #         y = self.out_linear(next_hid)
 #         return y, next_hid.detach()  # detach()和detach_()都可以使用
 
-trainning_data = SequenceMIDI(
-    BASE_PATH, sequence_lenth, max_file_num)
+melody_file = './r_data/crying_sand.mid'
 
-X = trainning_data.__getitem__(0)
+piano_roll, bar_indices,pm_old = preprocess_midi(melody_file)
+piano_roll_new = np.reshape(piano_roll,(-1,piano_roll.shape[-1]))
+input_roll = np.expand_dims(piano_roll_new[: 64, :], 0)
+X = input_roll
+reconstruction_new = pickle.load(open('./reconstruction_new', 'rb'))
+reconstruction_new = tf.convert_to_tensor(reconstruction_new)
+# trainning_data = SequenceMIDI(
+#     BASE_PATH, sequence_lenth, max_file_num)
+
+# X = trainning_data.__getitem__(0)
 
 # model = VQVAE(in_channels, embedding_dim, num_embeddings).to('cuda')
 
@@ -125,32 +135,65 @@ def gru3():
     # rnn1 = Bidirectional(GRU(rnn_dim, return_sequences=True), name='rnn1')(encoder_input)   # (1, 64, 192)
     decoder_latent_input = Input(shape=z_dim, name='z_sampling')
     repeated_z = RepeatVector(time_step, name='repeated_z_tension')(decoder_latent_input)
-    rnn1_output = GRU(rnn_dim, name='decoder_rnn1', return_sequences=True)(repeated_z)
+    enco = Model(decoder_latent_input, repeated_z, name='encoder')
+    return enco
+
+def gru4():
+    decoder_latent_input = Input(shape=(time_step, z_dim), name='z_sampling')
+    rnn1_output = GRU(rnn_dim, name='decoder_rnn1', return_sequences=True)(decoder_latent_input)
 
     rnn2_output = GRU(rnn_dim, name='decoder_rnn2', return_sequences=True)(
         rnn1_output)
-    rnn2 = Bidirectional(GRU(rnn_dim), name='rnn2')(repeated_z)   # (1, 192)
-
-    z_mean = Dense(z_dim, name='z_mean')(rnn2)  # (1, 96)
-    z_log_var = Dense(z_dim, name='z_log_var')(rnn2)
-
-    def sampling(args):
-        z_mean, z_log_var = args
-        batch = K.shape(z_mean)[0]
-        dim = K.int_shape(z_mean)[1]
-        # by default, random_normal has mean=0 and std=1.0
-        epsilon = K.random_normal(shape=(batch, dim))
-        return z_mean + K.exp(0.5 * z_log_var) * epsilon
-
-    z = Lambda(sampling, output_shape=(z_dim,), name='z')([z_mean, z_log_var])
 
     enco = Model(decoder_latent_input, rnn2_output, name='encoder')
+    return enco
+
+def gru5():
+    rnn2_output = Input(shape=(time_step, rnn_dim), name='rnn_dim')
+
+    tensile_middle_output = TimeDistributed(Dense(tension_middle_dim, activation='elu'),
+                                            name='tensile_strain_dense1')(rnn2_output)
+
+    enco = Model(rnn2_output, tensile_middle_output, name='encoder')
+    return enco
+
+def gru6():
+    rnn2_output = Input(shape=(time_step, rnn_dim), name='z_sampling')
+
+    tensile_middle_output = TimeDistributed(Dense(tension_middle_dim, activation='elu'),
+                                            name='tensile_strain_dense1')(rnn2_output)
+
+    # tensile_middle_output = TimeDistributed(Dense(64, activation='elu'),
+    #                                         name='tensile_strain_dense2')(tensile_middle_output)
+
+    # tensile_middle_output = TimeDistributed(Dense(32, activation='elu'),
+    #                                         name='tensile_strain_dense3')(tensile_middle_output)
+ 
+    # tensile_middle_output = TimeDistributed(Dense(16, activation='elu'),
+    #                                         name='tensile_strain_dense5')(tensile_middle_output)
+
+    tensile_output = TimeDistributed(Dense(tension_output_dim, activation='elu'),
+                                     name='tensile_strain_dense4')(tensile_middle_output)
+
+    enco = Model(rnn2_output, tensile_output, name='encoder')
     return enco
 
 gru11 = gru1()
 gru12 = gru2()
 gru13 = gru3()
+gru14 = gru4()
+gru15 = gru5()
+gru16 = gru6()
 ss = X[:1, :, :]    # (1, 64, 89)
 aa = gru11(ss)
-bb = gru12(aa)
-cc = gru13(bb)
+bb = gru12(aa)  # z, (1, 96)
+cc = gru13(bb)  # repeat z, (1, 64, 96)
+dd = gru14(cc)  # decode, (1, 64, 96)
+ee = gru15(dd)  # middle, (1, 64, 128)
+ff = gru16(dd)  # out, (1, 64, 1)
+
+gg = gru16(reconstruction_new)
+# hh = gru15(gg)  # (1, 64, 128)
+# ii = gru16(gg)  # (1, 64, 1)
+# ii = np.squeeze(ii)
+kl = K.random_normal(shape=(1, 64, 96))

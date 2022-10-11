@@ -103,7 +103,7 @@ def build_model():
     bass_pitch_output = TimeDistributed(Dense(bass_output_dim, activation='softmax'),
                                         name='bass_pitch_dense2')(bass_pitch_1)
 
-    decoder_output = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
+    decoder_output = [rnn2_output, melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
                       tensile_output, diameter_output
                       ]
 

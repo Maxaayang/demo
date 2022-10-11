@@ -5,6 +5,9 @@ import torch.nn as nn
 from params import *
 import pickle
 import util
+from tensorflow.keras.layers import Dense, Input, TimeDistributed
+from tensorflow.keras import Model
+import tensorflow as tf
 
 tensile_up_feature_vector = pickle.load(open('model/tensile_up_feature_vector','rb'))
 diameter_up_feature_vector = pickle.load(open('model/diameter_up_feature_vector','rb'))
@@ -300,6 +303,47 @@ def preprocess_midi(midi_file):
 #                 continue
 #             tension_name = tension_name.replace('/home/data/guorui/', '')
 
+def gru1():
+    decoder_input = Input(shape=(time_step, rnn_dim), name='decoder_input')
+
+    tensile_middle_output = TimeDistributed(Dense(tension_output_dim, activation='elu'),
+                                            name='tensile_strain_dense1')(decoder_input)
+
+    enco = Model(decoder_input, tensile_middle_output, name='encoder')
+    return enco
+
+def gru2():
+    decoder_output = Input(shape=(time_step, rnn_dim), name='decoder_input')
+
+    tensile_middle_output = TimeDistributed(Dense(tension_middle_dim, activation='elu'),
+                                            name='tensile_strain_dense1')(decoder_output)
+
+    tensile_output = TimeDistributed(Dense(tension_output_dim, activation='elu'),
+                                     name='tensile_strain_dense2')(tensile_middle_output)
+
+    enco = Model(decoder_output, tensile_output, name='encoder')
+    return enco
+
+def gru3():
+    decoder_input = Input(shape=(time_step, rnn_dim), name='decoder_input')
+
+    tensile_middle_output = TimeDistributed(Dense(tension_middle_dim, activation='elu'),
+                                            name='tensile_strain_dense1')(decoder_input)
+
+    tensile_output = TimeDistributed(Dense(tension_output_dim, activation='elu'),
+                                     name='tensile_strain_dense2')(tensile_middle_output)
+
+    diameter_middle_output = TimeDistributed(Dense(tension_middle_dim, activation='elu'),
+                                             name='diameter_strain_dense1')(decoder_input)
+
+    diameter_output = TimeDistributed(Dense(tension_output_dim, activation='elu'),
+                                      name='diameter_strain_dense2')(diameter_middle_output)
+    
+    result = [tensile_output, diameter_output]
+
+    enco = Model(decoder_input, result, name='encoder')
+    return enco
+
 def four_bar_iterate(pianoroll, model, feature_vectors,
                      factor_t,
                      factor_d,
@@ -308,6 +352,7 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
     result_roll = None
     tensile_strain = None
     diameter = None
+    torch.set_printoptions(precision=8)
 
     for i in range(number_of_iteration):
 
@@ -347,42 +392,46 @@ def four_bar_iterate(pianoroll, model, feature_vectors,
             print(f'factor is {curr_factor}')
             z = torch.tensor( [item.cpu().detach().numpy() for item in z] )
             z_new = z + curr_factor * feature_vector
-            z_new = z_new.to('cuda:0')  # (1, 64, 96)
+            z_new = z_new.to('cuda:0')  # (1, 96)
 
-            tensile_output_function = nn.Linear(rnn_dim, tension_output_dim)
-            diameter_output_function = nn.Linear(rnn_dim, tension_output_dim)
-            melody_rhythm_output_function = nn.Linear(rnn_dim, melody_note_start_dim)
-            melody_pitch_output_function = nn.Linear(rnn_dim, melody_output_dim)
-            bass_rhythm_output_function = nn.Linear(rnn_dim, bass_note_start_dim)
-            bass_pitch_output_function = nn.Linear(rnn_dim, bass_output_dim)
+            tensile_middle_output_function = nn.Linear(rnn_dim, tension_middle_dim).to('cuda')
+            tensile_output_function = nn.Linear(tension_middle_dim, tension_output_dim).to('cuda')
+            diameter_middle_output_function = nn.Linear(rnn_dim, tension_middle_dim).to('cuda')
+            diameter_output_function = nn.Linear(tension_middle_dim, tension_output_dim).to('cuda')
+            act = nn.ELU()
 
 
             # reconstruction = model.decode_(torch.unsqueeze(z.repeat(1, 64, 1), dim = 0).to('cuda'))    # mean 0.0004, 0.0284
             # reconstruction_new = model.decode_(torch.unsqueeze(z_new.repeat(1, 64, 1), dim = 0))   # (1, 64, 1)
             reconstruction = model.decode_(z.repeat(1, 64, 1).to('cuda'))    # mean 0.0004, 0.0284
             reconstruction_new = model.decode_(z_new.repeat(1, 64, 1))   # (1, 64, 1)
-            encode_value[0] = reconstruction_new
             reconstruction_new = torch.unsqueeze(reconstruction_new, dim=0)
             reconstruction_new = torch.tensor( [item.cpu().detach().numpy() for item in reconstruction_new] )
-            reconstruction_new = torch.squeeze(reconstruction_new, dim = 1)
-            melody_pitch_output = melody_pitch_output_function(reconstruction_new)
-            melody_rhythm_output = melody_rhythm_output_function(reconstruction_new)
-            bass_pitch_output = bass_pitch_output_function(reconstruction_new)
-            bass_rhythm_output = bass_rhythm_output_function(reconstruction_new)
-            tensile_output = tensile_output_function(reconstruction_new)
-            diameter_output = diameter_output_function(reconstruction_new)
-            reconstruction_new = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
-                        tensile_output, diameter_output
-                        ]
+            # reconstruction_new = torch.squeeze(reconstruction_new, dim = 1).to('cuda')
+            reconstruction_new = tf.convert_to_tensor(torch.squeeze(reconstruction_new, dim = 1))   # (1, 64, 96)
+            dense1 = gru1()
+            dense2 = gru2()
+            dense3 = gru3()
+            aa = dense1(reconstruction_new)
+            bb = dense3(reconstruction_new)
+            result = dense2(reconstruction_new)
+            result = [item.numpy() for item in result] 
+
+            # tensile_middle_output = tensile_middle_output_function(reconstruction_new)
+            # tensile_output = act(tensile_output_function(act(tensile_middle_output)))
+            # diameter_middle_output = diameter_middle_output_function(reconstruction_new)
+            # diameter_output = act(diameter_output_function(act(diameter_middle_output)))
+            # reconstruction_new = [ tensile_output, diameter_output ]
 
             # reconstruction_new = reconstruction_new.cpu().detach().numpy()
             # TODO 这里注释掉了
             # ss = np.concatenate(list(reconstruction_new), axis=-1)
             # result_new = util.result_sampling(reconstruction_new)[0]
-            reconstruction_new = [item.cpu().detach().numpy() for item in reconstruction_new] 
-            result_new = util.result_sampling(np.concatenate(list(reconstruction_new), axis=-1))[0]
-            tensile_new = np.squeeze(reconstruction_new[-2])
-            diameter_new = np.squeeze(reconstruction_new[-1])
+            # reconstruction_new = [item.numpy() for item in dd] 
+            # reconstruction_new = [item.cpu().detach().numpy() for item in reconstruction_new] 
+            result_new = util.result_sampling(np.concatenate(list(result), axis=-1))[0]
+            tensile_new = np.squeeze(result[-2])
+            diameter_new = np.squeeze(result[-1])
             # tensile_new = reconstruction_new[-1]
             # diameter_new = reconstruction_new[-1]
 

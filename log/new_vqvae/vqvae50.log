@@ -1,0 +1,32 @@
+Using cuda device
+Find 9524 files.
+Reading 9524 files...
+Read 989 sequences.
+VQVAE(
+  (bgru): GRU(89, 256, bidirectional=True)
+  (begru): GRU(512, 256, bidirectional=True)
+  (gru): GRU(256, 256)
+  (relu): LeakyReLU(negative_slope=0.01)
+  (dgru): GRU(96, 256)
+  (linear1): Linear(in_features=256, out_features=256, bias=True)
+  (linear2): Linear(in_features=512, out_features=96, bias=True)
+  (vq_layer): VectorQuantizer()
+)
+Start trainning...
+Epoch 1
+-----------------
+loss = 0.030966451394776676
+Epoch 2
+-----------------
+best loss = 0.030966451394776676, last loss = 0.030966451394776676, loss = 0.02995106786391812, diff loss = 0.0010153835308585567, per = 3.390141331427396
+Epoch 3
+-----------------
+best loss = 0.030966451394776676, last loss = 0.02995106786391812, loss = 0.029787250812491093, diff loss = 0.0011792005822855826, per = 3.9587425832231973
+Epoch 4
+-----------------
+best loss = 0.030966451394776676, last loss = 0.029787250812491093, loss = 0.029662843581859746, diff loss = 0.00130360781291693, per = 4.394749981806022
+Epoch 5
+-----------------
+best loss = 0.030966451394776676, last loss = 0.029662843581859746, loss = 0.029547252649522827, diff loss = 0.0014191987452538482, per = 4.803149592579016
+Done!
+Saved PyTorch Model State to model.pth

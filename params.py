@@ -1,7 +1,7 @@
 from re import A
 
 
-rnn_dim = 96
+rnn_dim = 256
 input_dim = 89
 
 time_step = 64
@@ -48,7 +48,7 @@ DEBUG = True
 batch_size = 64
 sequence_lenth = []
 max_file_num = None
-epochs = 1
+epochs = 5
 learning_rate = 0.005
 
 loss_weight = [0.1, 20.0, 1.0]

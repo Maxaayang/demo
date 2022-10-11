@@ -1,5 +1,6 @@
 from email.header import decode_header
 from mimetypes import init
+from unicodedata import bidirectional
 import torch
 from base import BaseVAE
 from torch import nn
@@ -104,54 +105,24 @@ class VectorQuantizer(nn.Module):
     # TODO 这里除了问题, 编码之后应该是一维的
     def forward(self, x):
         # [B, C, H, W] -> [B, H, W, C]
-        # x = torch.squeeze(x, dim=0)
 
         if not self.init:
             self.init_emb(x)
 
-        # x = x.permute(0, 2, 1).contiguous()
-        # [B, H, W, C] -> [BHW, C]
-        # x = x[:, :96, :]
         flat_x = x.reshape(-1, self.embedding_dim)
-        # flat_x = flat_x.to(device)
-        
-        # encoding_indices = self.get_code_indices(flat_x)
+
         min_distance, x_l = self.get_code_indices(flat_x)
         quantized = self.quantize(x_l)
         quantized = quantized.view_as(x) # [B, H, W, C]
-        
-        # if not self.training:
-        #     quantized = quantized.permute(0, 3, 1, 2).contiguous()
-        #     return quantized
-        
-        # embedding loss: move the embeddings towards the encoder's output
-        # quantized_data = quantized.data
-        # x_data = x.data
-        # q_latent_loss = F.mse_loss(quantized, x.detach())
-        # # commitment loss
-        # e_latent_loss = F.mse_loss(x_data, quantized_data.detach())
-        # loss = q_latent_loss + self.commitment_cost * e_latent_loss
+
         loss = torch.norm(quantized.detach() - x) ** 2 / np.prod(x.shape) * self.commitment_cost
 
         # Straight Through Estimator
         quantized = x + (quantized - x).detach()
-        
-        # quantized = quantized.permute(0, 3, 1, 2).contiguous()
-        # quantized = quantized.permute(0, 2, 1).contiguous()
-        # quantized = torch.squeeze(quantized)
+
         return x_l, quantized, loss
     
     def get_code_indices(self, flat_x):
-        # compute L2 distance
-        # print("self.embeddings.weight ", self.embeddings.weight)
-        # distances = (
-        #     torch.sum(flat_x ** 2, dim=1, keepdim=True) +
-        #     torch.sum(self.embeddings.weight ** 2, dim=1) -
-        #     2. * torch.matmul(flat_x, self.embeddings.weight.t())
-        # ) # [N, M]
-
-        # TODO
-
         distances = (
             torch.sum(flat_x ** 2, dim=-1, keepdim=True) +
             torch.sum(self.embeddings.t().to('cuda') ** 2, dim=0, keepdim=True) -
@@ -159,7 +130,7 @@ class VectorQuantizer(nn.Module):
         ) # [N, M]
 
         min_distance, x_l = torch.min(distances, dim=-1) # (min, min_indices)
-        # encoding_indices = torch.argmin(distances, dim=1) # [N,]
+
         return min_distance, x_l
     
     def quantize(self, encoding_indices):
@@ -167,7 +138,6 @@ class VectorQuantizer(nn.Module):
         # TODO
         x = F.embedding(encoding_indices, self.embeddings)
         return x
-        # return self.embeddings(encoding_indices) 
 
 class ResidualLayer(nn.Module):
 
@@ -200,41 +170,47 @@ class VQVAE(BaseVAE):
         self.num_embeddings = num_embeddings
         self.img_size = img_size
         self.beta = beta
-        self.egru = nn.GRU(input_dim, rnn_dim)
+        self.bgru = nn.GRU(input_dim, rnn_dim, bidirectional = True)
+        self.begru = nn.GRU(2 * rnn_dim, rnn_dim, bidirectional = True)
         self.gru = nn.GRU(rnn_dim, rnn_dim)
         self.relu = nn.LeakyReLU()
         self.dgru = nn.GRU(embedding_dim, rnn_dim)
-        self.linear = nn.Linear(rnn_dim, rnn_dim)
+        self.linear1 = nn.Linear(rnn_dim, rnn_dim)
+        self.linear2 = nn.Linear(2 * rnn_dim, embedding_dim)
 
         self.vq_layer = VectorQuantizer()
 
-    def encode_(self, input1: Tensor) -> List[Tensor]:
+    def encode_(self, input1):
         """
         Encodes the input by passing through the encoder network
         and returns the latent codes.
         :param input: (Tensor) Input tensor to encoder [N x C x H x W]
         :return: (Tensor) List of latent codes
         """
-        output1, states = self.egru(input1) # (1, 64, 96)
-        output2, states1 = self.gru(output1)    # (1, 64, 96)
-        result = self.linear(output2)
+        output1, states = self.bgru(input1) # (1, 64, 96)
+        output2, states1 = self.begru(output1)    # (1, 64, 96)
+        result = self.linear2(output2)
+        # z_mean = self.linear(output2)
+        # z_log_var = self.linear(output2)
+        # epsilon = torch.normal(0, 1.0, (1, 64, 96)).to('cuda')
+        # result = z_mean + torch.exp(0.5 * z_log_var) * epsilon
 
         # return result[:, -1, :]
         return result
 
-    def decode_(self, z: Tensor) -> Tensor:
+    def decode_(self, z):
         """
         Maps the given latent codes
         onto the image space.
         :param z: (Tensor) [B x D x H x W]
         :return: (Tensor) [B x C x H x W]
         """
-        output1, states = self.dgru(z)
+        output1, states = self.dgru(z)          # (1, 64, 96)
         output2, states1 = self.gru(output1)
 
         return output2
 
-    def forward(self, input: Tensor, **kwargs) -> List[Tensor]: # (16, 64, 89)
+    def forward(self, input, **kwargs): # (16, 64, 89)
         encoding = self.encode_(input)[0]  # (16, 96)
         # encoding = torch.squeeze(encoding, dim = 1)
         # encoding = encoding.reshape(1, 96)
@@ -252,7 +228,7 @@ class VQVAE(BaseVAE):
 
         recon_loss = torch.mean(torch.abs(decode_value - input))
         loss = vq_loss + recon_loss
-        print("vq_loss: ", vq_loss, " recon_loss: ", recon_loss)
+        # print("vq_loss: ", vq_loss, " recon_loss: ", recon_loss)
         return [index, decode_value, input, loss]
 
     def loss_function(self,
@@ -333,28 +309,36 @@ def manipuate_latent_space(piano_roll, vector_up_t, vector_high_d, vector_up_dow
     if with_input and piano_roll is not None:
         piano_roll = np.expand_dims(piano_roll, 0)
         piano_roll = torch.from_numpy(piano_roll).float().to('cuda:0')
-        z = vae.encode_(piano_roll)
+        encode_value = vae.encode_(piano_roll)
+        encode_value = torch.squeeze(encode_value, dim = 1).to('cuda') # (1, 64, 96)
+        encode_value1 = encode_value[:, -1, :]
+        x_l, z, vq_loss = vae.vq_layer(encode_value1)
     else:
         z = np.random.normal(size=(1,z_dim))
 
     z = torch.tensor( [item.cpu().detach().numpy() for item in z] )
     z = torch.squeeze(z, dim = 0).to('cuda')
-    reconstruction = vae.decode_(z)
+    reconstruction = vae.decode_(z.repeat(1, 64, 1).to('cuda'))
     reconstruction = reconstruction.to('cuda')
 
-    tensile_output_function = nn.Linear(rnn_dim, tension_output_dim).to('cuda')
-    diameter_output_function = nn.Linear(rnn_dim, tension_output_dim).to('cuda')
+    tensile_middle_output_function = nn.Linear(rnn_dim, tension_middle_dim).to('cuda')
+    tensile_output_function = nn.Linear(tension_middle_dim, tension_output_dim).to('cuda')
+    diameter_middle_output_function = nn.Linear(rnn_dim, tension_middle_dim).to('cuda')
+    diameter_output_function = nn.Linear(tension_middle_dim, tension_output_dim).to('cuda')
     melody_rhythm_output_function = nn.Linear(rnn_dim, melody_note_start_dim).to('cuda')
     melody_pitch_output_function = nn.Linear(rnn_dim, melody_output_dim).to('cuda')
     bass_rhythm_output_function = nn.Linear(rnn_dim, bass_note_start_dim).to('cuda')
     bass_pitch_output_function = nn.Linear(rnn_dim, bass_output_dim).to('cuda')
+    act = nn.ELU()
 
     melody_pitch_output = melody_pitch_output_function(reconstruction)
     melody_rhythm_output = melody_rhythm_output_function(reconstruction)
     bass_pitch_output = bass_pitch_output_function(reconstruction)
     bass_rhythm_output = bass_rhythm_output_function(reconstruction)
-    tensile_output = tensile_output_function(reconstruction)
-    diameter_output = diameter_output_function(reconstruction)
+    tensile_middle_output = tensile_middle_output_function(reconstruction)
+    tensile_output = act(tensile_output_function(act(tensile_middle_output)))
+    diameter_middle_output = diameter_middle_output_function(reconstruction)
+    diameter_output = act(diameter_output_function(act(diameter_middle_output)))
     reconstruction = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
                 tensile_output, diameter_output
                 ]
@@ -378,7 +362,7 @@ def manipuate_latent_space(piano_roll, vector_up_t, vector_high_d, vector_up_dow
     if change_t_up_down:
         changed_z += t_up_down_factor * vector_up_down_t
 
-    changed_z = changed_z.to('cuda:0')
+    changed_z = changed_z.repeat(1, 64, 1).to('cuda')
     changed_reconstruction = vae.decode_(changed_z)
 
     changed_reconstruction = torch.tensor([item.cpu().detach().numpy() for item in changed_reconstruction])
@@ -389,8 +373,10 @@ def manipuate_latent_space(piano_roll, vector_up_t, vector_high_d, vector_up_dow
     melody_rhythm_output = melody_rhythm_output_function(changed_reconstruction)
     bass_pitch_output = bass_pitch_output_function(changed_reconstruction)
     bass_rhythm_output = bass_rhythm_output_function(changed_reconstruction)
-    tensile_output = tensile_output_function(changed_reconstruction)
-    diameter_output = diameter_output_function(changed_reconstruction)
+    tensile_middle_output = tensile_middle_output_function(changed_reconstruction)
+    tensile_output = act(tensile_output_function(act(tensile_middle_output)))
+    diameter_middle_output = diameter_middle_output_function(changed_reconstruction)
+    diameter_output = act(diameter_output_function(act(diameter_middle_output)))
     changed_reconstruction = [melody_pitch_output, melody_rhythm_output, bass_pitch_output, bass_rhythm_output,
                 tensile_output, diameter_output
                 ]
